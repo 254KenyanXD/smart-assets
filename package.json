@@ -1,0 +1,44 @@
+{
+  "name": "smart-assets",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build && bun ./node_modules/@serwist/cli/cli.js build",
+    "start": "bun --bun next start",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun src/db/migrate.ts",
+    "db:seed": "bun src/db/seed.ts",
+    "db:studio": "drizzle-kit studio",
+    "admin:create": "bun src/db/create-admin.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.7.18",
+    "better-auth": "^1.7.18",
+    "drizzle-orm": "^0.45.4",
+    "effect": "^4.1.2",
+    "next": "16",
+    "node-html-parser": "^9.0.7",
+    "pdf-lib": "^1.17.1",
+    "react": "19",
+    "react-dom": "19",
+    "react-hook-form": "^7.91.0",
+    "tough-cookie": "^6.1.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@serwist/cli": "^9.5.13",
+    "@serwist/next": "^9.5.13",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/bun": "^1.4.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
+    "serwist": "^9.5.13",
+    "tailwindcss": "^4.3.5",
+    "typescript": "7"
+  }
+}

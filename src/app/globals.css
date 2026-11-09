@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --sa-bg: #f1f4ef;
+  --sa-surface: #ffffff;
+  --sa-alt: #f6f9f3;
+  --sa-line: #dde6d6;
+  --sa-ink: #1b3a28;
+  --sa-ink2: #4a6b52;
+  --sa-ink3: #7c9a82;
+  --sa-accent: #2d5e3a;
+  --sa-accent-fill: #2d5e3a;
+  --sa-role: #e8f0e2;
+  --sa-deep: #14301e;
+  --sa-accsoft: #e4efdc;
+  --sa-on-deep: #f4faf2;
+  --sa-amber: #8a5b1c;
+  --sa-amberbg: #f7efdd;
+  --sa-red: #9b3b2d;
+  --sa-redbg: #f9e9e6;
+}
+
+html[data-theme="dark"] {
+  --sa-bg: #0f1712;
+  --sa-surface: #17211a;
+  --sa-alt: #1c2721;
+  --sa-line: #2c3b32;
+  --sa-ink: #e8f1e4;
+  --sa-ink2: #b4c8b6;
+  --sa-ink3: #8fa795;
+  --sa-accent: #8fd29a;
+  --sa-accent-fill: #3c7649;
+  --sa-role: #22332a;
+  --sa-deep: #16281c;
+  --sa-accsoft: #26382d;
+  --sa-on-deep: #f4faf2;
+  --sa-amber: #d8b074;
+  --sa-amberbg: #33291a;
+  --sa-red: #e49a8c;
+  --sa-redbg: #38221f;
+}
+
+@theme inline {
+  --color-bg: var(--sa-bg);
+  --color-surface: var(--sa-surface);
+  --color-alt: var(--sa-alt);
+  --color-line: var(--sa-line);
+  --color-ink: var(--sa-ink);
+  --color-ink2: var(--sa-ink2);
+  --color-ink3: var(--sa-ink3);
+  --color-accent: var(--sa-accent);
+  --color-accent-fill: var(--sa-accent-fill);
+  --color-role: var(--sa-role);
+  --color-deep: var(--sa-deep);
+  --color-accsoft: var(--sa-accsoft);
+  --color-on-deep: var(--sa-on-deep);
+  --color-amber: var(--sa-amber);
+  --color-amberbg: var(--sa-amberbg);
+  --color-red: var(--sa-red);
+  --color-redbg: var(--sa-redbg);
+  --font-sans: var(--font-dm), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist), ui-monospace, monospace;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--sa-bg);
+  color: var(--sa-ink);
+  font-family: var(--font-sans);
+}
+
+.sa-mark-dark {
+  display: none;
+}
+
+html[data-theme="dark"] .sa-mark-bright {
+  display: none;
+}
+
+html[data-theme="dark"] .sa-mark-dark {
+  display: block;
+}
