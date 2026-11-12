@@ -1,0 +1,18 @@
+import { Card } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+import { SignInForm } from "./sign-in-form";
+
+/** Email-first sign-in. The university is detected before a password is asked for. */
+export default function SignInPage() {
+  return (
+    <main className="flex min-h-screen flex-col items-center px-5 py-8">
+      <div className="mb-6 flex w-full max-w-[420px] justify-end">
+        <ThemeToggle />
+      </div>
+      <Card>
+        <SignInForm />
+      </Card>
+    </main>
+  );
+}
