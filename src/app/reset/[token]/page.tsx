@@ -1,0 +1,37 @@
+import { CustodyMark } from "@/components/custody-mark";
+import { Card } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { RESET_INVALID_MESSAGE } from "@/domain/password-reset";
+import { orm } from "@/lib/auth-server";
+import { readPasswordReset } from "@/lib/password-reset-store";
+
+import { AcceptResetForm } from "./accept-form";
+
+/**
+ * Set a new password from one reset link.
+ * An expired, revoked, used, or unknown token shows the same sentence.
+ */
+export default async function ResetPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const reset = readPasswordReset(orm, token, new Date());
+
+  return (
+    <main className="flex min-h-screen flex-col items-center px-5 py-8">
+      <div className="mb-6 flex w-full max-w-[420px] justify-end">
+        <ThemeToggle />
+      </div>
+      <Card>
+        <div className="flex items-center gap-3">
+          <CustodyMark />
+          <p className="font-mono text-[11px] font-semibold tracking-[0.14em] text-ink3">UNIVERSITY SMART-ASSETS</p>
+        </div>
+        <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-ink">Reset password</h1>
+        {reset === null ? (
+          <p className="mt-4 text-sm text-ink2">{RESET_INVALID_MESSAGE}</p>
+        ) : (
+          <AcceptResetForm token={token} reset={reset} />
+        )}
+      </Card>
+    </main>
+  );
+}
