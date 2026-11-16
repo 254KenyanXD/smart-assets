@@ -1,6 +1,7 @@
 import { labelStaffRole } from "@/domain/staff-invite";
 import { listAssets, listOpenCustody } from "@/lib/asset-store";
 import { orm } from "@/lib/auth-server";
+import { listFoundReports } from "@/lib/found-store";
 
 import { requireUniversityRole } from "../school/guard";
 import { DeskBoard, type DeskAsset, type DeskLoan } from "./desk-board";
@@ -35,6 +36,7 @@ export default async function DeskPage() {
     locationName: row.locationName.length === 0 ? "No location" : row.locationName,
     conditionLabel: row.conditionLabel.length === 0 ? "None yet" : row.conditionLabel,
   }));
+  const found = listFoundReports(orm, access.organizationId);
   const loans: readonly DeskLoan[] = listOpenCustody(orm, access.organizationId).map((loan) => ({
     assetId: loan.assetId,
     assetTitle: loan.assetTitle,
@@ -54,6 +56,7 @@ export default async function DeskPage() {
       subtitle={`${weekday} ${now.getUTCDate()} ${month} - ${access.userName} at the desk`}
       assets={assets}
       loans={loans}
+      found={found}
     />
   );
 }

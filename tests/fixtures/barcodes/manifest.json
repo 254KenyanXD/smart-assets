@@ -1,0 +1,26 @@
+[
+  {
+    "file": "ean13-multi.png",
+    "format": "ean_13",
+    "text": "0031415926531",
+    "sourceUrl": "https://raw.githubusercontent.com/zxing-cpp/zxing-cpp/master/test/samples/multi-1/ean+qr.png",
+    "license": "Apache-2.0",
+    "note": "The sample holds two symbols. The expected text is the EAN-13 line in test/samples/multi-1/ean+qr.toml; this entry is that symbol."
+  },
+  {
+    "file": "code128.png",
+    "format": "code_128",
+    "text": "10064908",
+    "sourceUrl": "https://raw.githubusercontent.com/zxing-cpp/zxing-cpp/master/test/samples/code128-2/03.png",
+    "license": "Apache-2.0",
+    "note": "Expected text is test/samples/code128-2/03.txt from the same sample set."
+  },
+  {
+    "file": "qrcode.png",
+    "format": "qr_code",
+    "text": "Morden",
+    "sourceUrl": "https://raw.githubusercontent.com/zxing-cpp/zxing-cpp/master/test/samples/qrcode-1/9.png",
+    "license": "Apache-2.0",
+    "note": "Expected text is test/samples/qrcode-1/9.txt from the same sample set."
+  }
+]

@@ -261,6 +261,62 @@ export function listStudentCustody(orm: Orm, universityId: string, userId: strin
   };
 }
 
+/** A borrower the desk can name before the checkout is confirmed. */
+export interface BorrowerLookup {
+  /** Account id posted with the checkout. */
+  readonly userId: string;
+  /** Profile name, or the account name when the profile has none. */
+  readonly name: string;
+  /** Admission number, or null when the profile has none. */
+  readonly officialId: string | null;
+  /** Portal photo, or null when the profile has none or the column is blank. */
+  readonly photoUrl: string | null;
+}
+
+/**
+ * A student of this university, looked up by email or by admission number.
+ *
+ * An `@` selects the email match, the same rule as `findUniversityStudent`.
+ * Anything else is an exact match on the stored admission number, which is
+ * never lowercased: `23-1943` is a university-issued identifier, not a slug.
+ *
+ * @param orm - Drizzle handle for the app database.
+ * @param universityId - University the checkout is for.
+ * @param key - Email or admission number typed at the desk, or read from a badge.
+ * @returns The borrower without contact details, or null when nobody matches.
+ */
+export function findBorrower(orm: Orm, universityId: string, key: string): BorrowerLookup | null {
+  const typed = key.trim();
+  if (typed.length === 0) {
+    return null;
+  }
+  const identity = typed.includes("@")
+    ? sql`lower(${schema.user.email}) = ${typed.toLowerCase()}`
+    : sql`${schema.studentProfiles.officialId} = ${typed}`;
+  const row = orm
+    .select({
+      userId: schema.user.id,
+      name: schema.user.name,
+      officialId: schema.studentProfiles.officialId,
+      photoUrl: schema.studentProfiles.photoUrl,
+    })
+    .from(schema.member)
+    .innerJoin(schema.user, eq(schema.member.userId, schema.user.id))
+    .leftJoin(schema.studentProfiles, eq(schema.studentProfiles.userId, schema.user.id))
+    .where(and(eq(schema.member.organizationId, universityId), eq(schema.member.role, "student"), identity))
+    .get();
+  if (row === undefined) {
+    return null;
+  }
+  const photo = row.photoUrl;
+  return {
+    userId: row.userId,
+    name: row.name,
+    officialId: row.officialId,
+    photoUrl: typeof photo === "string" && photo.trim().length > 0 ? photo : null,
+  };
+}
+
 /**
  * A student member of this university, looked up by login email.
  *
