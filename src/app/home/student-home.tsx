@@ -1,3 +1,5 @@
+import { borrowerBadgeSvg } from "@/lib/scan/badge";
+
 import { FoundTag } from "./found-tag";
 import { SignOutButton } from "./sign-out-button";
 
@@ -38,9 +40,11 @@ export interface StudentHomeData {
 /**
  * Student home from the Soft Bento screen: borrower badge, real open loans, and the desk note.
  * An empty loan list keeps the empty sentence. Rows are not invented.
+ * The badge is the admission number as a QR symbol; without one, the painted bars stay.
  */
 export function StudentHome({ data }: { readonly data: StudentHomeData }) {
   const university = data.universityName.toUpperCase();
+  const badge = badgeSvg(data.officialId);
   return (
     <div className="flex w-full max-w-[390px] flex-col gap-4 pb-8">
       <header id="profile" className="flex items-center gap-2.5">
@@ -64,15 +68,24 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
             <p className="mt-1 font-mono text-xs text-[#A9C7AD]">{data.officialId}</p>
           ) : null}
         </div>
-        <div className="flex h-14 items-center gap-[3px] overflow-hidden rounded-lg bg-white px-3" aria-hidden="true">
-          <span className="h-[34px] w-0.5 rounded-sm bg-deep" />
-          <span className="h-[34px] w-1 rounded-sm bg-deep" />
-          <span className="h-[34px] w-0.5 rounded-sm bg-deep" />
-          <span className="h-[34px] w-1.5 rounded-sm bg-deep" />
-          <span className="h-[34px] w-0.5 rounded-sm bg-deep" />
-          <span className="h-[34px] w-1 rounded-sm bg-deep" />
-          <span className="h-[34px] w-0.5 rounded-sm bg-deep" />
-        </div>
+        {badge === null ? (
+          <div className="flex h-14 items-center gap-[3px] overflow-hidden rounded-lg bg-white px-3" aria-hidden="true">
+            <span className="h-[34px] w-0.5 rounded-sm bg-deep" />
+            <span className="h-[34px] w-1 rounded-sm bg-deep" />
+            <span className="h-[34px] w-0.5 rounded-sm bg-deep" />
+            <span className="h-[34px] w-1.5 rounded-sm bg-deep" />
+            <span className="h-[34px] w-0.5 rounded-sm bg-deep" />
+            <span className="h-[34px] w-1 rounded-sm bg-deep" />
+            <span className="h-[34px] w-0.5 rounded-sm bg-deep" />
+          </div>
+        ) : (
+          <div
+            role="img"
+            aria-label="Borrower badge"
+            className="flex items-center justify-center rounded-lg bg-white p-3 [&>svg]:h-40 [&>svg]:w-40"
+            dangerouslySetInnerHTML={{ __html: badge }}
+          />
+        )}
         <p className="text-xs text-[#A9C7AD]">Show this at the desk</p>
       </section>
 
@@ -150,4 +163,29 @@ function Stat({ value, label }: { readonly value: string; readonly label: string
       <p className="mt-1 text-[10px] leading-tight text-ink3">{label}</p>
     </div>
   );
+}
+
+/**
+ * The badge symbol for one admission number.
+ *
+ * The payload is the number as the university issues it. A profile without an
+ * admission number keeps the painted bars, and a number the encoder refuses
+ * falls back to them instead of failing the page.
+ *
+ * @param officialId - Admission number from the profile, or null.
+ * @returns A standalone SVG document, or null when there is nothing to draw.
+ */
+function badgeSvg(officialId: string | null): string | null {
+  if (officialId === null) {
+    return null;
+  }
+  const payload = officialId.trim();
+  if (payload.length === 0) {
+    return null;
+  }
+  try {
+    return borrowerBadgeSvg(payload);
+  } catch {
+    return null;
+  }
 }

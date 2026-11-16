@@ -1,11 +1,13 @@
 "use server";
 
+import { and, eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { findUniversityStudent } from "@/lib/asset-store";
+import * as schema from "@/db/schema";
+import { findBorrower } from "@/lib/asset-store";
 import { auth, orm, runtime } from "@/lib/auth-server";
 import { Service as Custody, type Actor } from "@/services/custody";
 
@@ -22,6 +24,32 @@ export interface DeskResult {
 const emptyFound: Pick<DeskResult, "foundTitle" | "foundLocation"> = {
   foundTitle: null,
   foundLocation: null,
+};
+
+/** What the desk may show about a borrower before the checkout is confirmed. */
+export interface BorrowerPreview {
+  /** Error sentence, or null when the borrower was found. */
+  readonly message: string | null;
+  /** Borrower name, or null when nobody matched. */
+  readonly name: string | null;
+  /** Admission number, or null when the profile has none or nobody matched. */
+  readonly officialId: string | null;
+  /** Portal photo, or null when there is none. */
+  readonly photoUrl: string | null;
+}
+
+const deniedPreview: BorrowerPreview = {
+  message: "You cannot record that change.",
+  name: null,
+  officialId: null,
+  photoUrl: null,
+};
+
+const unknownBorrower: BorrowerPreview = {
+  message: "The borrower is not a student at this university.",
+  name: null,
+  officialId: null,
+  photoUrl: null,
 };
 
 async function actor(): Promise<Actor | DeskResult> {
@@ -43,6 +71,26 @@ async function actor(): Promise<Actor | DeskResult> {
 
 function isActor(value: Actor | DeskResult): value is Actor {
   return "userId" in value;
+}
+
+/**
+ * The signed-in attendant for the active university.
+ * Hiding a field is not this check: the desk endpoint asks the membership row.
+ */
+async function attendant(): Promise<Actor | DeskResult> {
+  const who = await actor();
+  if (!isActor(who)) {
+    return who;
+  }
+  const membership = orm
+    .select({ role: schema.member.role })
+    .from(schema.member)
+    .where(and(eq(schema.member.organizationId, who.universityId), eq(schema.member.userId, who.userId)))
+    .get();
+  if (membership === undefined || membership.role !== "attendant") {
+    return { message: "You cannot record that change.", ...emptyFound };
+  }
+  return who;
 }
 
 function text(formData: FormData, key: string): string {
@@ -87,9 +135,10 @@ function refresh(): void {
 }
 
 /**
- * Check an asset out to a student email typed at the desk.
+ * Check an asset out to the student typed at the desk.
+ * The borrower is an email or an admission number. The attendant gate stays in the custody service.
  *
- * @param formData - Tag, student email, and an optional due date.
+ * @param formData - Tag, student key, and an optional due date.
  */
 export async function checkoutAsset(formData: FormData): Promise<DeskResult> {
   const who = await actor();
@@ -101,7 +150,9 @@ export async function checkoutAsset(formData: FormData): Promise<DeskResult> {
   if (dueText.length > 0 && dueAt === null) {
     return { message: "The due date is not a date.", ...emptyFound };
   }
-  const student = findUniversityStudent(orm, who.universityId, text(formData, "email"));
+  const studentField = text(formData, "student");
+  const key = studentField.trim().length === 0 ? text(formData, "email") : studentField;
+  const student = findBorrower(orm, who.universityId, key);
   if (student === null) {
     return { message: "The borrower is not a student at this university.", ...emptyFound };
   }
@@ -123,6 +174,29 @@ export async function checkoutAsset(formData: FormData): Promise<DeskResult> {
   }
   refresh();
   return { message: null, ...emptyFound };
+}
+
+/**
+ * Name the borrower before the checkout is confirmed. Reads only.
+ * The key is an email or an admission number, and a non-attendant is refused.
+ *
+ * @param key - What the attendant typed or scanned.
+ */
+export async function previewBorrower(key: string): Promise<BorrowerPreview> {
+  const who = await attendant();
+  if (!isActor(who)) {
+    return deniedPreview;
+  }
+  const borrower = findBorrower(orm, who.universityId, key);
+  if (borrower === null) {
+    return unknownBorrower;
+  }
+  return {
+    message: null,
+    name: borrower.name,
+    officialId: borrower.officialId,
+    photoUrl: borrower.photoUrl,
+  };
 }
 
 /**

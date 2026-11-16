@@ -7,7 +7,12 @@ import { SchoolRail } from "@/components/school-rail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { checkInAsset, checkoutAsset, reportFound } from "./actions";
+import type { FoundReportRow } from "@/lib/found-store";
+import { routeScan, type ScanPhase } from "@/lib/scan/route";
+
+import { checkInAsset, checkoutAsset, previewBorrower, reportFound, type BorrowerPreview } from "./actions";
+import { FoundQueue } from "./found-queue";
+import { ScanPanel } from "./scan-panel";
 
 /** One asset the attendant can look up before checkout. */
 export interface DeskAsset {
@@ -55,17 +60,24 @@ export interface DeskBoardProps {
   readonly assets: readonly DeskAsset[];
   /** Open loans. Empty until a checkout exists. */
   readonly loans: readonly DeskLoan[];
+  /** Found-tag reports for this university. The borrower is not on these rows. */
+  readonly found: readonly FoundReportRow[];
 }
 
 /**
- * Attendant desk: type a tag, check it out, and grade it on the way back.
- * The camera is not on this page. A found-item result shows the title and the location only.
+ * Attendant desk: scan or type a tag, check it out, and grade it on the way back.
+ * A scan fills a field; the attendant still confirms the checkout and still picks a grade.
+ * A found-item result shows the title and the location only.
  */
 export function DeskBoard(props: DeskBoardProps) {
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [foundTitle, setFoundTitle] = useState<string | null>(null);
   const [foundLocation, setFoundLocation] = useState<string | null>(null);
+  const [tag, setTag] = useState("");
+  const [student, setStudent] = useState("");
+  const [phase, setPhase] = useState<ScanPhase>("asset");
+  const [preview, setPreview] = useState<BorrowerPreview | null>(null);
   const needle = query.trim().toLowerCase();
   const visibleAssets =
     needle.length === 0
@@ -90,6 +102,52 @@ export function DeskBoard(props: DeskBoardProps) {
             loan.borrowerName.toLowerCase().includes(needle)
           );
         });
+  const visibleFound =
+    needle.length === 0
+      ? props.found
+      : props.found.filter((row) => {
+          return (
+            row.assetTitle.toLowerCase().includes(needle) ||
+            row.assetTag.toLowerCase().includes(needle) ||
+            (row.locationName ?? "").toLowerCase().includes(needle) ||
+            (row.note ?? "").toLowerCase().includes(needle)
+          );
+        });
+  const foundEmpty = props.found.length === 0 ? "No found tags." : "No found tags match that search.";
+
+  /** Ask the server to name the borrower. Reads only, so a miss writes nothing. */
+  async function showBorrower(key: string): Promise<void> {
+    const typed = key.trim();
+    if (typed.length === 0) {
+      setPreview(null);
+      return;
+    }
+    setPreview(await previewBorrower(typed));
+  }
+
+  /**
+   * One accepted read. A student fills the borrower field, a known loan tag
+   * selects that row for the grade, and anything else is the checkout tag.
+   * No read submits a form.
+   */
+  function handleHit(text: string): void {
+    const route = routeScan(phase, text, props.loans);
+    if (route.kind === "student") {
+      const payload = text.trim();
+      setStudent(payload);
+      setPhase("asset");
+      void showBorrower(payload);
+      return;
+    }
+    if (route.kind === "loan") {
+      setPhase("asset");
+      const loan = props.loans.find((row) => row.assetId === route.assetId);
+      if (loan !== undefined) focusCondition(loan.assetTag);
+      return;
+    }
+    setTag(text.trim());
+    setPhase("student");
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-bg md:flex-row">
@@ -219,17 +277,41 @@ export function DeskBoard(props: DeskBoardProps) {
               setFoundTitle(null);
               setFoundLocation(null);
               setMessage(result.message);
+              if (result.message === null) {
+                setTag("");
+                setStudent("");
+                setPreview(null);
+                setPhase("asset");
+              }
             }}
           >
             <h2 className="font-display text-[15px] font-semibold text-ink md:col-span-2">Checkout</h2>
             <label className="flex flex-col gap-1 text-[11px] text-ink3">
               Asset tag
-              <Input name="tag" required maxLength={64} autoCapitalize="off" />
+              <Input
+                name="tag"
+                required
+                maxLength={64}
+                autoCapitalize="off"
+                value={tag}
+                onChange={(event) => setTag(event.target.value)}
+              />
             </label>
             <label className="flex flex-col gap-1 text-[11px] text-ink3">
-              Student email
-              <Input name="email" type="email" required autoCapitalize="off" />
+              Student email or admission number
+              <Input
+                name="student"
+                required
+                autoCapitalize="off"
+                value={student}
+                onChange={(event) => setStudent(event.target.value)}
+                onBlur={() => {
+                  void showBorrower(student);
+                }}
+              />
             </label>
+            {preview !== null ? <BorrowerCard preview={preview} /> : null}
+            <ScanPanel label={phase === "student" ? "Scan student badge" : "Scan tag"} onHit={handleHit} />
             <label className="flex flex-col gap-1 text-[11px] text-ink3">
               Due date
               <Input name="due" type="date" />
@@ -321,6 +403,7 @@ export function DeskBoard(props: DeskBoardProps) {
               </table>
             </div>
           </section>
+          <FoundQueue rows={visibleFound} emptyLabel={foundEmpty} />
           <form
             className="grid gap-3 rounded-[18px] border border-line bg-surface p-[18px] md:grid-cols-2"
             action={async (formData) => {
@@ -355,4 +438,51 @@ export function DeskBoard(props: DeskBoardProps) {
       </div>
     </div>
   );
+}
+
+/**
+ * The borrower the desk is about to lend to. It shows a photo only when the
+ * profile has one. A missing photo, or a missing admission number, does not
+ * block the checkout.
+ */
+function BorrowerCard({ preview }: { readonly preview: BorrowerPreview }) {
+  if (preview.name === null) {
+    return (
+      <div className="rounded-xl border border-line bg-alt px-3 py-2 md:col-span-2">
+        <p className="text-[12px] text-ink2">
+          {preview.message ?? "The borrower is not a student at this university."}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-line bg-alt px-3 py-2 md:col-span-2">
+      {preview.photoUrl !== null ? (
+        <img
+          src={preview.photoUrl}
+          alt={preview.name}
+          className="h-10 w-10 rounded-full object-cover"
+        />
+      ) : null}
+      <div className="min-w-0">
+        <p className="text-[12px] font-medium text-ink">{preview.name}</p>
+        <p className="font-mono text-[11px] text-ink3">{preview.officialId ?? "No admission number"}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Move the keyboard to the grade for one returned asset.
+ * The select is named by its aria-label, so the tag the desk read is the one it opens.
+ *
+ * @param tag - Asset tag on the open loan.
+ */
+function focusCondition(tag: string): void {
+  const label = `Condition for ${tag}`.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const select = document.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`);
+  if (select === null) {
+    return;
+  }
+  select.focus();
 }
