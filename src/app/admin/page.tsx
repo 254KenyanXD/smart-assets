@@ -1,10 +1,11 @@
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { forbidden } from "next/navigation";
 
 import { SchoolRail } from "@/components/school-rail";
 import { ThemeToggle } from "@/components/theme-toggle";
 import * as schema from "@/db/schema";
+import { labelStaffRole, parseStaffRole } from "@/domain/staff-invite";
 import { auth, orm } from "@/lib/auth-server";
 
 import { InviteForm } from "./invite-form";
@@ -82,6 +83,21 @@ export default async function AdminPage() {
   }));
   const active = rows.filter((row) => row.status === "active");
   const suspended = rows.filter((row) => row.status === "suspended").length;
+  const accounts = orm
+    .select({
+      userId: schema.user.id,
+      name: schema.user.name,
+      email: schema.user.email,
+      platformRole: schema.user.platformRole,
+      organizationId: schema.member.organizationId,
+      memberRole: schema.member.role,
+      universityName: schema.universities.name,
+    })
+    .from(schema.user)
+    .leftJoin(schema.member, eq(schema.member.userId, schema.user.id))
+    .leftJoin(schema.universities, eq(schema.universities.id, schema.member.organizationId))
+    .orderBy(asc(schema.user.email), asc(schema.universities.name))
+    .all();
 
   return (
     <div className="flex min-h-screen flex-col bg-bg md:flex-row">
@@ -168,6 +184,55 @@ export default async function AdminPage() {
               </table>
             </div>
           </section>
+          <section className="min-w-0 rounded-[18px] border border-line bg-surface p-[18px]">
+            <h2 className="font-display text-[15px] font-semibold text-ink">Accounts</h2>
+            <p className="mt-1 text-[12px] text-ink2">
+              Email, name, and role. Use this when a sign-in email has been forgotten. Passwords are not listed.
+            </p>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full min-w-[640px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-line">
+                    <th scope="col" className="py-2.5 pr-3 text-[10px] font-semibold text-ink3">
+                      Email
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 text-[10px] font-semibold text-ink3">
+                      Name
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 text-[10px] font-semibold text-ink3">
+                      Role
+                    </th>
+                    <th scope="col" className="py-2.5 text-[10px] font-semibold text-ink3">
+                      University
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accounts.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-sm text-ink2">
+                        No accounts yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    accounts.map((account) => (
+                      <tr
+                        key={`${account.userId}:${account.organizationId ?? "none"}`}
+                        className="border-b border-line last:border-b-0"
+                      >
+                        <td className="py-3 pr-3 font-mono text-[11px] text-ink">{account.email}</td>
+                        <td className="py-3 pr-3 text-[12px] text-ink2">{account.name}</td>
+                        <td className="py-3 pr-3 text-[12px] text-ink2">
+                          {accountRole(account.platformRole, account.memberRole)}
+                        </td>
+                        <td className="py-3 text-[12px] text-ink2">{account.universityName ?? ""}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
           <section className="max-w-[420px] rounded-[18px] border border-line bg-surface p-[18px]">
             <InviteForm universities={active.map((row) => ({ id: row.id, name: row.name }))} />
           </section>
@@ -246,4 +311,21 @@ function statusClass(status: string): string {
 
 function counted(count: number, singular: string, plural: string): string {
   return `${count} ${count === 1 ? singular : plural}`;
+}
+
+/**
+ * Words for one account row. A membership role wins over the platform role.
+ *
+ * @param platformRole - `user.platform_role`.
+ * @param memberRole - University role, or null when the account has no membership on this row.
+ */
+function accountRole(platformRole: string, memberRole: string | null): string {
+  if (memberRole === null) {
+    return platformRole === "super_admin" ? "Platform administrator" : "No university role";
+  }
+  if (memberRole === "student") {
+    return "Student";
+  }
+  const staff = parseStaffRole(memberRole);
+  return staff === null ? memberRole : labelStaffRole(staff);
 }
