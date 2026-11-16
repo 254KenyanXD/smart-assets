@@ -29,6 +29,9 @@ export default async function HomePage() {
           .where(eq(schema.universities.id, organizationId))
           .get();
   const platformRole = session.user.platformRole;
+  if (platformRole === "super_admin") {
+    redirect("/admin");
+  }
   const membership =
     typeof organizationId !== "string"
       ? undefined
