@@ -27,7 +27,12 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         </div>
         <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-ink">Staff invite</h1>
         {invite === null ? (
-          <p className="mt-4 text-sm text-ink2">{INVITE_INVALID_MESSAGE}</p>
+          <>
+            <p className="mt-4 text-sm text-ink2">{INVITE_INVALID_MESSAGE}</p>
+            <a href="/sign-in" className="mt-4 inline-block text-sm font-semibold text-accent">
+              Back to sign in
+            </a>
+          </>
         ) : (
           <AcceptInviteForm token={token} invite={invite} />
         )}

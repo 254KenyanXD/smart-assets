@@ -27,7 +27,12 @@ export default async function ResetPage({ params }: { params: Promise<{ token: s
         </div>
         <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-ink">Reset password</h1>
         {reset === null ? (
-          <p className="mt-4 text-sm text-ink2">{RESET_INVALID_MESSAGE}</p>
+          <>
+            <p className="mt-4 text-sm text-ink2">{RESET_INVALID_MESSAGE}</p>
+            <a href="/sign-in" className="mt-4 inline-block text-sm font-semibold text-accent">
+              Back to sign in
+            </a>
+          </>
         ) : (
           <AcceptResetForm token={token} reset={reset} />
         )}
