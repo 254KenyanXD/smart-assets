@@ -22,7 +22,12 @@ export default async function InventoryPage() {
     stateLabel: row.stateLabel,
     conditionLabel: row.conditionLabel,
     locationName: row.locationName,
+    locationId: row.locationId ?? "",
     bookValue: row.bookValue === null ? "" : String(row.bookValue),
+    cost: String(row.cost),
+    salvage: String(row.salvage),
+    usefulLifeYears: String(row.usefulLifeYears),
+    purchasedOn: utcDay(row.purchasedOn),
     movedOn: utcDay(row.updatedAt),
   }));
   const role = parseStaffRole(access.role);

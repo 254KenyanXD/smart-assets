@@ -1,9 +1,9 @@
 import { labelStaffRole } from "@/domain/staff-invite";
-import { listOpenCustody } from "@/lib/asset-store";
+import { listAssets, listOpenCustody } from "@/lib/asset-store";
 import { orm } from "@/lib/auth-server";
 
 import { requireUniversityRole } from "../school/guard";
-import { DeskBoard, type DeskLoan } from "./desk-board";
+import { DeskBoard, type DeskAsset, type DeskLoan } from "./desk-board";
 
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 const months = [
@@ -28,6 +28,13 @@ const months = [
 export default async function DeskPage() {
   const access = await requireUniversityRole(["attendant"]);
   const now = new Date();
+  const assets: readonly DeskAsset[] = listAssets(orm, access.organizationId, now).map((row) => ({
+    title: row.title,
+    tag: row.tag,
+    stateLabel: row.stateLabel,
+    locationName: row.locationName.length === 0 ? "No location" : row.locationName,
+    conditionLabel: row.conditionLabel.length === 0 ? "None yet" : row.conditionLabel,
+  }));
   const loans: readonly DeskLoan[] = listOpenCustody(orm, access.organizationId).map((loan) => ({
     assetId: loan.assetId,
     assetTitle: loan.assetTitle,
@@ -45,6 +52,7 @@ export default async function DeskPage() {
       userInitials={initials(access.userName)}
       userRoleLabel={labelStaffRole("attendant")}
       subtitle={`${weekday} ${now.getUTCDate()} ${month} - ${access.userName} at the desk`}
+      assets={assets}
       loans={loans}
     />
   );

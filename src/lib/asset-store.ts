@@ -38,6 +38,16 @@ export interface ListedAsset {
   readonly locationName: string;
   /** Book value in integer currency units, or null when the stored money cannot be used. */
   readonly bookValue: number | null;
+  /** Cost in integer currency units. */
+  readonly cost: number;
+  /** Salvage in integer currency units. */
+  readonly salvage: number;
+  /** Useful life in whole years. */
+  readonly usefulLifeYears: number;
+  /** Purchase date as stored. */
+  readonly purchasedOn: Date;
+  /** Location id, or null when the asset has none. */
+  readonly locationId: string | null;
   /** Last time the asset row changed. */
   readonly updatedAt: Date;
 }
@@ -105,6 +115,7 @@ export function listAssets(orm: Orm, universityId: string, now: Date): readonly 
       usefulLifeYears: schema.assets.usefulLifeYears,
       purchasedOn: schema.assets.purchasedOn,
       lastCondition: schema.assets.lastCondition,
+      locationId: schema.assets.locationId,
       locationName: schema.locations.name,
       updatedAt: schema.assets.updatedAt,
     })
@@ -132,6 +143,11 @@ export function listAssets(orm: Orm, universityId: string, now: Date): readonly 
       conditionLabel: condition === null ? "" : labelCondition(condition),
       locationName: row.locationName ?? "",
       bookValue: money._tag === "ok" ? money.value.bookValue : null,
+      cost: row.cost,
+      salvage: row.salvage,
+      usefulLifeYears: row.usefulLifeYears,
+      purchasedOn: row.purchasedOn,
+      locationId: row.locationId,
       updatedAt: row.updatedAt,
     };
   });
