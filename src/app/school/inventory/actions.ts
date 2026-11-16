@@ -127,6 +127,53 @@ export async function registerAsset(formData: FormData): Promise<ActionResult> {
 }
 
 /**
+ * Correct one asset's recorded details. State and condition stay as they are.
+ *
+ * @param formData - Asset id, title, tag, money, purchase date, and location.
+ */
+export async function updateAsset(formData: FormData): Promise<ActionResult> {
+  const who = await actor();
+  if (!isActor(who)) {
+    return who;
+  }
+  const cost = whole(text(formData, "cost"));
+  const salvage = whole(text(formData, "salvage"));
+  const usefulLifeYears = whole(text(formData, "usefulLifeYears"));
+  if (cost === null || salvage === null || usefulLifeYears === null) {
+    return { message: "Cost, salvage, and useful life have to be whole numbers." };
+  }
+  const purchasedOn = utcDay(text(formData, "purchasedOn"));
+  if (purchasedOn === null) {
+    return { message: "The purchase date is not a date." };
+  }
+  const locationId = text(formData, "locationId").trim();
+  const result = await runtime.runPromise(
+    Effect.result(
+      Effect.gen(function* () {
+        const custody = yield* Custody;
+        return yield* custody.update({
+          actor: who,
+          assetId: text(formData, "assetId"),
+          title: text(formData, "title"),
+          tag: text(formData, "tag"),
+          cost,
+          salvage,
+          usefulLifeYears,
+          purchasedOn,
+          locationId: locationId.length === 0 ? null : locationId,
+        });
+      }),
+    ),
+  );
+  if (result._tag === "Failure") {
+    return { message: failureMessage(result.failure) };
+  }
+  revalidatePath("/school/inventory");
+  revalidatePath("/desk");
+  return { message: null };
+}
+
+/**
  * Add a lab, a desk, or a library counter in the signed-in university.
  *
  * @param formData - Name, kind, and an optional department id.

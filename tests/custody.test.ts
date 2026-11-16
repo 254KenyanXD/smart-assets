@@ -683,4 +683,128 @@ describe("custody", () => {
     const names = listLocations(ormOf(database), daystar).map((row) => row.name);
     expect(names).toEqual(["Review counter"]);
   });
+
+  test("refuses checkout until a school administrator marks the asset available", async () => {
+    const database = memoryDatabase();
+    plantPeople(database);
+    const asset = await register(database, { tag: "TAG-PROCURED" });
+    const refused = await run(
+      database,
+      Effect.result(
+        Effect.gen(function* () {
+          const custody = yield* Custody;
+          return yield* custody.checkout({
+            actor: actor("user_attendant", daystar),
+            tag: "TAG-PROCURED",
+            borrowerUserId: "user_student",
+            dueAt: null,
+          });
+        }),
+      ),
+    );
+    expect(refused._tag).toBe("Failure");
+    if (refused._tag === "Failure") {
+      expect(refused.failure._tag).toBe("IllegalMove");
+      expect(refused.failure.message).toBe(
+        "This asset is Procured. A school administrator has to mark it available before checkout.",
+      );
+    }
+    const stored = ormOf(database).select().from(schema.assets).where(eq(schema.assets.id, asset.id)).get();
+    expect(stored?.state).toBe("procured");
+    expect(ormOf(database).select().from(schema.custody).all()).toEqual([]);
+  });
+
+  test("a school administrator can correct an asset without changing its state or condition", async () => {
+    const database = memoryDatabase();
+    plantPeople(database);
+    const asset = await register(database, { tag: "TAG-EDIT" });
+    const purchased = new Date("2025-03-01T00:00:00.000Z");
+    const updated = await run(
+      database,
+      Effect.gen(function* () {
+        const custody = yield* Custody;
+        return yield* custody.update({
+          actor: actor("user_admin", daystar),
+          assetId: asset.id,
+          tag: "TAG-EDITED",
+          title: "Edited cable",
+          cost: 80000,
+          salvage: 5000,
+          usefulLifeYears: 4,
+          purchasedOn: purchased,
+          locationId: null,
+        });
+      }),
+    );
+    expect(updated.state).toBe("procured");
+    expect(updated.tag).toBe("TAG-EDITED");
+    const stored = ormOf(database).select().from(schema.assets).where(eq(schema.assets.id, asset.id)).get();
+    expect(stored?.title).toBe("Edited cable");
+    expect(stored?.tag).toBe("TAG-EDITED");
+    expect(stored?.state).toBe("procured");
+    expect(stored?.lastCondition).toBeNull();
+    expect(stored?.cost).toBe(80000);
+    expect(stored?.salvage).toBe(5000);
+    expect(stored?.usefulLifeYears).toBe(4);
+    expect(stored?.locationId).toBeNull();
+    expect(stored?.purchasedOn.toISOString()).toBe(purchased.toISOString());
+    const audit = ormOf(database).select().from(schema.auditLog).where(eq(schema.auditLog.action, "asset.update")).get();
+    expect(audit?.target).toBe(asset.id);
+    expect(audit?.before).toMatchObject({ state: "procured", tag: "TAG-EDIT", lastCondition: null });
+    expect(audit?.after).toMatchObject({ state: "procured", tag: "TAG-EDITED", lastCondition: null });
+
+    await register(database, { tag: "TAG-TAKEN" });
+    const clash = await run(
+      database,
+      Effect.result(
+        Effect.gen(function* () {
+          const custody = yield* Custody;
+          return yield* custody.update({
+            actor: actor("user_admin", daystar),
+            assetId: asset.id,
+            tag: "TAG-TAKEN",
+            title: "Edited cable",
+            cost: 80000,
+            salvage: 5000,
+            usefulLifeYears: 4,
+            purchasedOn: purchased,
+            locationId: null,
+          });
+        }),
+      ),
+    );
+    expect(clash._tag).toBe("Failure");
+    if (clash._tag === "Failure") {
+      expect(clash.failure._tag).toBe("DuplicateTag");
+    }
+    expect(ormOf(database).select().from(schema.assets).where(eq(schema.assets.id, asset.id)).get()?.tag).toBe("TAG-EDITED");
+
+    for (const userId of ["user_attendant", "user_head"] as const) {
+      const refused = await run(
+        database,
+        Effect.result(
+          Effect.gen(function* () {
+            const custody = yield* Custody;
+            return yield* custody.update({
+              actor: actor(userId, daystar),
+              assetId: asset.id,
+              tag: "TAG-NO",
+              title: "Should not land",
+              cost: 1,
+              salvage: 0,
+              usefulLifeYears: 1,
+              purchasedOn,
+              locationId: null,
+            });
+          }),
+        ),
+      );
+      expect(refused._tag).toBe("Failure");
+      if (refused._tag === "Failure") {
+        expect(refused.failure._tag).toBe("NotAllowed");
+        expect(refused.failure.message).toBe("You cannot record that change.");
+      }
+    }
+    expect(ormOf(database).select().from(schema.assets).where(eq(schema.assets.id, asset.id)).get()?.tag).toBe("TAG-EDITED");
+  });
 });

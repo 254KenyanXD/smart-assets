@@ -9,6 +9,20 @@ import { Input } from "@/components/ui/input";
 
 import { checkInAsset, checkoutAsset, reportFound } from "./actions";
 
+/** One asset the attendant can look up before checkout. */
+export interface DeskAsset {
+  /** Title. */
+  readonly title: string;
+  /** Tag. */
+  readonly tag: string;
+  /** Status words, including Procured and Available. */
+  readonly stateLabel: string;
+  /** Location name, or "No location". */
+  readonly locationName: string;
+  /** Last check-in grade, or "None yet". */
+  readonly conditionLabel: string;
+}
+
 /** One open loan the attendant can check back in. */
 export interface DeskLoan {
   /** Asset id posted with the check-in. */
@@ -37,6 +51,8 @@ export interface DeskBoardProps {
   readonly userRoleLabel: string;
   /** Real date and name, in the desk subtitle. */
   readonly subtitle: string;
+  /** Every asset in this university. The attendant can read them and cannot edit them. */
+  readonly assets: readonly DeskAsset[];
   /** Open loans. Empty until a checkout exists. */
   readonly loans: readonly DeskLoan[];
 }
@@ -51,6 +67,18 @@ export function DeskBoard(props: DeskBoardProps) {
   const [foundTitle, setFoundTitle] = useState<string | null>(null);
   const [foundLocation, setFoundLocation] = useState<string | null>(null);
   const needle = query.trim().toLowerCase();
+  const visibleAssets =
+    needle.length === 0
+      ? props.assets
+      : props.assets.filter((asset) => {
+          return (
+            asset.title.toLowerCase().includes(needle) ||
+            asset.tag.toLowerCase().includes(needle) ||
+            asset.stateLabel.toLowerCase().includes(needle) ||
+            asset.locationName.toLowerCase().includes(needle) ||
+            asset.conditionLabel.toLowerCase().includes(needle)
+          );
+        });
   const visible =
     needle.length === 0
       ? props.loans
@@ -130,6 +158,60 @@ export function DeskBoard(props: DeskBoardProps) {
             </div>
           </section>
           {message !== null ? <p className="text-sm text-ink2">{message}</p> : null}
+          <section className="min-w-0 rounded-[18px] border border-line bg-surface p-[18px]">
+            <h2 className="font-display text-[15px] font-semibold text-ink">Assets</h2>
+            <p className="mt-1 text-[12px] text-ink2">
+              Checkout needs an Available asset. A school administrator marks a Procured asset available.
+            </p>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full min-w-[680px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-line">
+                    <th scope="col" className="py-2.5 pr-3 text-[10px] font-semibold text-ink3">
+                      Asset
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 text-[10px] font-semibold text-ink3">
+                      Tag
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 text-[10px] font-semibold text-ink3">
+                      Status
+                    </th>
+                    <th scope="col" className="py-2.5 pr-3 text-[10px] font-semibold text-ink3">
+                      Location
+                    </th>
+                    <th scope="col" className="py-2.5 text-[10px] font-semibold text-ink3">
+                      Condition
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {props.assets.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-sm text-ink2">
+                        No assets yet.
+                      </td>
+                    </tr>
+                  ) : visibleAssets.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-sm text-ink2">
+                        No assets match that search.
+                      </td>
+                    </tr>
+                  ) : (
+                    visibleAssets.map((asset) => (
+                      <tr key={asset.tag} className="border-b border-line last:border-b-0">
+                        <td className="py-3 pr-3 text-[12px] font-medium text-ink">{asset.title}</td>
+                        <td className="py-3 pr-3 font-mono text-[11px] text-ink3">{asset.tag}</td>
+                        <td className="py-3 pr-3 text-[12px] text-ink">{asset.stateLabel}</td>
+                        <td className="py-3 pr-3 text-[12px] text-ink2">{asset.locationName}</td>
+                        <td className="py-3 text-[12px] text-ink2">{asset.conditionLabel}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
           <form
             className="grid gap-3 rounded-[18px] border border-line bg-surface p-[18px] md:grid-cols-2"
             action={async (formData) => {

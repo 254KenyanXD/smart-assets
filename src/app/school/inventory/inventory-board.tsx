@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SchoolRail } from "@/components/school-rail";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import type { AssetState } from "@/domain/asset-state";
 import { displayLocationKind, labelLocationKind, locationKinds } from "@/domain/location";
 
-import { createLocation, recordMove, registerAsset } from "./actions";
+import { createLocation, recordMove, registerAsset, updateAsset } from "./actions";
 
 /** One inventory row, already labelled for the table. */
 export interface InventoryRow {
@@ -27,8 +27,18 @@ export interface InventoryRow {
   readonly conditionLabel: string;
   /** Location column. Empty when the asset has none. */
   readonly locationName: string;
+  /** Location id for the edit form, or an empty string when the asset has none. */
+  readonly locationId: string;
   /** Book value, or an empty string when the stored money cannot be used. */
   readonly bookValue: string;
+  /** Cost for the edit form. */
+  readonly cost: string;
+  /** Salvage for the edit form. */
+  readonly salvage: string;
+  /** Useful life for the edit form. */
+  readonly usefulLifeYears: string;
+  /** Purchase date, `YYYY-MM-DD`, for the edit form. */
+  readonly purchasedOn: string;
   /** UTC date of the last asset change. */
   readonly movedOn: string;
 }
@@ -80,6 +90,7 @@ export interface InventoryBoardProps {
 export function InventoryBoard(props: InventoryBoardProps) {
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const needle = query.trim().toLowerCase();
   const visible =
     needle.length === 0
@@ -89,7 +100,7 @@ export function InventoryBoard(props: InventoryBoardProps) {
             row.title.toLowerCase().includes(needle) ||
             row.tag.toLowerCase().includes(needle) ||
             row.stateLabel.toLowerCase().includes(needle) ||
-            row.conditionLabel.toLowerCase().includes(needle) ||
+            shownCondition(row.conditionLabel).toLowerCase().includes(needle) ||
             row.locationName.toLowerCase().includes(needle)
           );
         });
@@ -216,26 +227,56 @@ export function InventoryBoard(props: InventoryBoardProps) {
                     </tr>
                   ) : (
                     visible.map((row) => (
-                      <tr key={row.id} className="border-b border-line last:border-b-0">
-                        <td className="py-3 pr-3 text-[12px] font-medium text-ink">{row.title}</td>
-                        <td className="py-3 pr-3 font-mono text-[11px] text-ink3">{row.tag}</td>
-                        <td className="py-3 pr-3 text-[12px] text-ink2">{row.conditionLabel}</td>
-                        <td className="py-3 pr-3 text-[12px] text-ink">{row.stateLabel}</td>
-                        <td className="py-3 pr-3 text-[12px] text-ink2">{row.locationName}</td>
-                        <td className="py-3 pr-3 font-mono text-[11px] text-ink2">{row.bookValue}</td>
-                        <td className="py-3 pr-3 font-mono text-[11px] text-ink3">{row.movedOn}</td>
-                        {props.canWrite ? (
-                          <td className="py-3">
-                            <MoveButtons
-                              assetId={row.id}
-                              state={row.state}
-                              onDone={(next) => {
-                                setMessage(next);
-                              }}
-                            />
-                          </td>
+                      <Fragment key={row.id}>
+                        <tr className="border-b border-line last:border-b-0">
+                          <td className="py-3 pr-3 text-[12px] font-medium text-ink">{row.title}</td>
+                          <td className="py-3 pr-3 font-mono text-[11px] text-ink3">{row.tag}</td>
+                          <td className="py-3 pr-3 text-[12px] text-ink2">{shownCondition(row.conditionLabel)}</td>
+                          <td className="py-3 pr-3 text-[12px] text-ink">{row.stateLabel}</td>
+                          <td className="py-3 pr-3 text-[12px] text-ink2">{row.locationName}</td>
+                          <td className="py-3 pr-3 font-mono text-[11px] text-ink2">{row.bookValue}</td>
+                          <td className="py-3 pr-3 font-mono text-[11px] text-ink3">{row.movedOn}</td>
+                          {props.canWrite ? (
+                            <td className="py-3">
+                              <div className="flex flex-col items-start gap-2">
+                                <MoveButtons
+                                  assetId={row.id}
+                                  state={row.state}
+                                  onDone={(next) => {
+                                    setMessage(next);
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="quiet"
+                                  className="h-9 px-3"
+                                  onClick={() => {
+                                    setEditingId(editingId === row.id ? null : row.id);
+                                  }}
+                                >
+                                  {editingId === row.id ? "Close edit" : "Edit"}
+                                </Button>
+                              </div>
+                            </td>
+                          ) : null}
+                        </tr>
+                        {props.canWrite && editingId === row.id ? (
+                          <tr className="border-b border-line">
+                            <td colSpan={8} className="py-3">
+                              <EditForm
+                                row={row}
+                                locations={props.locations}
+                                onDone={(next) => {
+                                  setMessage(next);
+                                  if (next === null) {
+                                    setEditingId(null);
+                                  }
+                                }}
+                              />
+                            </td>
+                          </tr>
                         ) : null}
-                      </tr>
+                      </Fragment>
                     ))
                   )}
                 </tbody>
@@ -352,11 +393,79 @@ function RegisterForm(props: {
           ))}
         </select>
       </label>
+      <p className="text-[12px] text-ink2 md:col-span-3">
+        Condition is recorded when the asset is checked in. A new asset starts as Procured until you mark it available.
+      </p>
       <div className="md:col-span-3">
         <Button type="submit">Register asset</Button>
       </div>
     </form>
   );
+}
+
+function EditForm(props: {
+  readonly row: InventoryRow;
+  readonly locations: readonly InventoryLocationChoice[];
+  readonly onDone: (message: string | null) => void;
+}) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const result = await updateAsset(new FormData(form));
+    props.onDone(result.message);
+  }
+  return (
+    <form key={props.row.id} onSubmit={submit} className="grid gap-3 md:grid-cols-3">
+      <input type="hidden" name="assetId" value={props.row.id} />
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Title
+        <Input name="title" required maxLength={120} defaultValue={props.row.title} />
+      </label>
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Tag
+        <Input name="tag" required maxLength={64} autoCapitalize="off" defaultValue={props.row.tag} />
+      </label>
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Purchase date
+        <Input name="purchasedOn" type="date" required defaultValue={props.row.purchasedOn} />
+      </label>
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Cost
+        <Input name="cost" inputMode="numeric" required defaultValue={props.row.cost} />
+      </label>
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Salvage
+        <Input name="salvage" inputMode="numeric" required defaultValue={props.row.salvage} />
+      </label>
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Useful life in years
+        <Input name="usefulLifeYears" inputMode="numeric" required defaultValue={props.row.usefulLifeYears} />
+      </label>
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Location
+        <select
+          name="locationId"
+          defaultValue={props.row.locationId}
+          className="h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
+        >
+          <option value="">No location</option>
+          {props.locations.map((location) => (
+            <option key={location.id} value={location.id}>
+              {locationLabel(location)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="text-[12px] text-ink2 md:col-span-3">This edit does not change the status or the condition.</p>
+      <div className="md:col-span-3">
+        <Button type="submit">Save asset</Button>
+      </div>
+    </form>
+  );
+}
+
+function shownCondition(label: string): string {
+  return label.length === 0 ? "None yet" : label;
 }
 
 function locationLabel(location: InventoryLocationChoice): string {

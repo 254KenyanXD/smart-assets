@@ -5,7 +5,7 @@ import { Context, Effect, Layer, Schema } from "effect";
 import type { Database } from "bun:sqlite";
 
 import * as schema from "@/db/schema";
-import { decideMove, parseAssetState, type AssetState } from "@/domain/asset-state";
+import { decideMove, labelAssetState, parseAssetState, type AssetState } from "@/domain/asset-state";
 import { parseCondition, type Condition } from "@/domain/condition";
 import { straightLine, type DepreciationRefusal } from "@/domain/depreciation";
 import { parseLocationKind, type LocationKind } from "@/domain/location";
@@ -126,6 +126,7 @@ export class InvalidAsset extends Schema.TaggedError<InvalidAsset>()("InvalidAss
 type Outcome<A, E> = { readonly _tag: "ok"; readonly value: A } | { readonly _tag: "err"; readonly error: E };
 
 type RegisterError = NotAllowed | SuspendedUniversity | DuplicateTag | BadMoney | InvalidAsset;
+type UpdateError = NotAllowed | SuspendedUniversity | UnknownAsset | DuplicateTag | BadMoney | InvalidAsset;
 type LocationError = NotAllowed | SuspendedUniversity | InvalidAsset;
 type MoveError = NotAllowed | SuspendedUniversity | UnknownAsset | IllegalMove;
 type CheckoutError = NotAllowed | SuspendedUniversity | UnknownAsset | IllegalMove | NotAStudent | InvalidAsset;
@@ -159,6 +160,26 @@ export interface Interface {
     readonly purchasedOn: Date;
     readonly locationId?: string | null;
   }) => Effect.Effect<RegisteredAsset, NotAllowed | SuspendedUniversity | DuplicateTag | BadMoney | InvalidAsset>;
+  /**
+   * Correct the recorded details of one asset.
+   * State and the last check-in condition stay as they are.
+   *
+   * @param input - Actor, asset id, and the details a school administrator can edit.
+   */
+  readonly update: (input: {
+    readonly actor: Actor;
+    readonly assetId: string;
+    readonly tag: string;
+    readonly title: string;
+    readonly cost: number;
+    readonly salvage: number;
+    readonly usefulLifeYears: number;
+    readonly purchasedOn: Date;
+    readonly locationId: string | null;
+  }) => Effect.Effect<
+    AssetSnapshot,
+    NotAllowed | SuspendedUniversity | UnknownAsset | DuplicateTag | BadMoney | InvalidAsset
+  >;
   /**
    * Add a lab, a desk, or a library counter in the actor's university.
    * The department is optional. When it is set, it has to belong to that university.
@@ -252,6 +273,24 @@ export function layer(database: Database): Layer.Layer<Service> {
         return yield* unwrap<RegisteredAsset, RegisterError>(outcome);
       });
 
+      const update = Effect.fn("Custody.update")(function* (input: {
+        readonly actor: Actor;
+        readonly assetId: string;
+        readonly tag: string;
+        readonly title: string;
+        readonly cost: number;
+        readonly salvage: number;
+        readonly usefulLifeYears: number;
+        readonly purchasedOn: Date;
+        readonly locationId: string | null;
+      }): Effect.fn.Return<
+        AssetSnapshot,
+        NotAllowed | SuspendedUniversity | UnknownAsset | DuplicateTag | BadMoney | InvalidAsset
+      > {
+        const outcome = yield* Effect.sync(() => updateAsset(orm, input));
+        return yield* unwrap<AssetSnapshot, UpdateError>(outcome);
+      });
+
       const createLocation = Effect.fn("Custody.createLocation")(function* (input: {
         readonly actor: Actor;
         readonly name: string;
@@ -305,7 +344,7 @@ export function layer(database: Database): Layer.Layer<Service> {
         return yield* unwrap<FoundReceipt, FoundError>(outcome);
       });
 
-      return Service.of({ register, createLocation, recordMove, checkout, checkIn, reportFound });
+      return Service.of({ register, update, createLocation, recordMove, checkout, checkIn, reportFound });
     }),
   );
 }
@@ -594,6 +633,121 @@ function registerAsset(
   }
 }
 
+function updateAsset(
+  orm: Orm,
+  input: {
+    readonly actor: Actor;
+    readonly assetId: string;
+    readonly tag: string;
+    readonly title: string;
+    readonly cost: number;
+    readonly salvage: number;
+    readonly usefulLifeYears: number;
+    readonly purchasedOn: Date;
+    readonly locationId: string | null;
+  },
+): Outcome<AssetSnapshot, UpdateError> {
+  const gate = authorize(orm, input.actor, recordRoles);
+  if (gate._tag === "err") {
+    return gate;
+  }
+  const title = input.title.trim();
+  const tag = input.tag.trim();
+  if (title.length === 0 || tag.length === 0) {
+    return err(new InvalidAsset({ message: "The title and the tag are required." }));
+  }
+  if (title.length > 120 || tag.length > 64) {
+    return err(new InvalidAsset({ message: "The title or the tag is too long." }));
+  }
+  if (Number.isNaN(input.purchasedOn.getTime())) {
+    return err(new InvalidAsset({ message: "The purchase date is not a date." }));
+  }
+  const money = straightLine({
+    cost: input.cost,
+    salvage: input.salvage,
+    usefulLifeYears: input.usefulLifeYears,
+    ageYears: 0,
+  });
+  if (money._tag === "invalid") {
+    return err(new BadMoney({ message: moneyMessage(money.reason) }));
+  }
+  try {
+    return orm.transaction((tx) => {
+      const asset = loadAsset(tx, input.actor.universityId, input.assetId);
+      if (asset === undefined) {
+        return err(new UnknownAsset({ message: "That asset is not in this university." }));
+      }
+      const state = parseAssetState(asset.state);
+      if (state === null) {
+        return err(new InvalidAsset({ message: "That asset is not in a state this desk can edit." }));
+      }
+      if (input.locationId !== null) {
+        const location = tx
+          .select({ id: schema.locations.id })
+          .from(schema.locations)
+          .where(
+            and(eq(schema.locations.id, input.locationId), eq(schema.locations.universityId, input.actor.universityId)),
+          )
+          .get();
+        if (location === undefined) {
+          return err(new InvalidAsset({ message: "That location is not part of this university." }));
+        }
+      }
+      const existing = loadByTag(tx, input.actor.universityId, tag);
+      if (existing !== undefined && existing.id !== asset.id) {
+        return err(new DuplicateTag({ message: "This university already has that tag." }));
+      }
+      const now = new Date();
+      tx.update(schema.assets)
+        .set({
+          title,
+          tag,
+          locationId: input.locationId,
+          cost: input.cost,
+          salvage: input.salvage,
+          usefulLifeYears: input.usefulLifeYears,
+          purchasedOn: input.purchasedOn,
+          updatedAt: now,
+        })
+        .where(eq(schema.assets.id, asset.id))
+        .run();
+      writeAudit(tx, {
+        actor: input.actor,
+        action: "asset.update",
+        target: asset.id,
+        before: {
+          title: asset.title,
+          tag: asset.tag,
+          locationId: asset.locationId,
+          cost: asset.cost,
+          salvage: asset.salvage,
+          usefulLifeYears: asset.usefulLifeYears,
+          purchasedOn: asset.purchasedOn.toISOString(),
+          state: asset.state,
+          lastCondition: asset.lastCondition,
+        },
+        after: {
+          title,
+          tag,
+          locationId: input.locationId,
+          cost: input.cost,
+          salvage: input.salvage,
+          usefulLifeYears: input.usefulLifeYears,
+          purchasedOn: input.purchasedOn.toISOString(),
+          state: asset.state,
+          lastCondition: asset.lastCondition,
+        },
+      });
+      return ok({ id: asset.id, tag, state });
+    });
+  } catch (error) {
+    if (isDuplicateTagError(error)) {
+      return err(new DuplicateTag({ message: "This university already has that tag." }));
+    }
+    throw error;
+  }
+}
+
 function moveAsset(
   orm: Orm,
   input: { readonly actor: Actor; readonly assetId: string; readonly to: AssetState },
@@ -680,6 +834,13 @@ function checkoutAsset(
     const from = parseAssetState(asset.state);
     if (from === null || decideMove(from, "in_custody")._tag === "reject" || openLoan(tx, asset.id) !== undefined) {
       rejectMove(tx, input.actor, asset.id, from ?? asset.state, "in_custody");
+      if (from !== null && from !== "available" && from !== "in_custody") {
+        return err(
+          new IllegalMove({
+            message: `This asset is ${labelAssetState(from)}. A school administrator has to mark it available before checkout.`,
+          }),
+        );
+      }
       return err(new IllegalMove({ message: "That move is not on the custody list." }));
     }
     const now = new Date();
