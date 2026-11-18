@@ -1,5 +1,5 @@
+import { ThemeCorner } from "@/components/theme-toggle";
 import { Card } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 import { SignInForm } from "./sign-in-form";
 
@@ -7,9 +7,7 @@ import { SignInForm } from "./sign-in-form";
 export default function SignInPage() {
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-8">
-      <div className="mb-6 flex w-full max-w-[420px] justify-end">
-        <ThemeToggle />
-      </div>
+      <ThemeCorner />
       <Card>
         <SignInForm />
       </Card>

@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/theme-toggle";
 import { borrowerBadgeSvg } from "@/lib/scan/badge";
 
 import { FoundTag } from "./found-tag";
@@ -51,9 +52,12 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accsoft text-xs font-semibold text-accent">
           {data.initials}
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-[15px] font-semibold text-ink">{data.name}</p>
           <p className="text-[11px] text-ink3">{data.meta}</p>
+        </div>
+        <div className="ml-auto">
+          <ThemeToggle />
         </div>
       </header>
 

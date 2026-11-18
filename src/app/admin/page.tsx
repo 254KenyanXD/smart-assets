@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { forbidden } from "next/navigation";
 
 import { SchoolRail } from "@/components/school-rail";
-import { ThemeToggle } from "@/components/theme-toggle";
 import * as schema from "@/db/schema";
 import { labelStaffRole, parseStaffRole } from "@/domain/staff-invite";
 import { auth, orm } from "@/lib/auth-server";
@@ -124,7 +123,6 @@ export default async function AdminPage() {
             </ol>
           </nav>
           <div className="flex items-center gap-[10px]">
-            <ThemeToggle />
             <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-accsoft text-[10px] font-semibold text-accent">
               {initials(session.user.name)}
             </span>

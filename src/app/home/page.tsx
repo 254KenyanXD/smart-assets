@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { CustodyMark } from "@/components/custody-mark";
 import { labelStaffRole, parseStaffRole } from "@/domain/staff-invite";
 import { Card } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeCorner } from "@/components/theme-toggle";
 import * as schema from "@/db/schema";
 import { listStudentCustody } from "@/lib/asset-store";
 import { auth, orm } from "@/lib/auth-server";
@@ -66,9 +66,6 @@ export default async function HomePage() {
     };
     return (
       <main className="flex min-h-screen flex-col items-center bg-bg px-5 py-6">
-        <div className="mb-4 flex w-full max-w-[390px] justify-end">
-          <ThemeToggle />
-        </div>
         <StudentHome data={data} />
       </main>
     );
@@ -86,9 +83,7 @@ export default async function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-8">
-      <div className="mb-6 flex w-full max-w-[420px] justify-end">
-        <ThemeToggle />
-      </div>
+      <ThemeCorner />
       <Card>
         <div className="flex items-center gap-3">
           <CustodyMark />
