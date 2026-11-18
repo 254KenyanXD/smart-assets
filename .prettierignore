@@ -1,0 +1,15 @@
+# bun fmt reads this file. These paths are vendored or generated.
+# Reformatting them rewrites data the app does not own.
+
+# Hipo university directory, loaded in memory. Do not reformat.
+data/
+
+# Drizzle owns the snapshot JSON.
+drizzle/meta/
+
+# Lockfile, generated worker, brand files, and fixture bytes.
+bun.lock
+public/
+tests/fixtures/
+next-env.d.ts
+*.tsbuildinfo
