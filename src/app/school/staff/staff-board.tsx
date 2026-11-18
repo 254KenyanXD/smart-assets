@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { SchoolRail } from "@/components/school-rail";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -113,7 +112,6 @@ export function StaffBoard(props: StaffBoardProps) {
               onChange={(event) => setQuery(event.target.value)}
               className="h-[38px] w-full min-w-0 rounded-[10px] border border-line bg-alt px-3 text-[12px] text-ink outline-none placeholder:text-ink3 focus:border-accent md:w-[260px]"
             />
-            <ThemeToggle />
             <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-accsoft text-[10px] font-semibold text-accent">
               {props.userInitials}
             </span>

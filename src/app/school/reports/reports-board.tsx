@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { ThemeToggle } from "@/components/theme-toggle";
 import { SchoolRail, type SchoolNavLabel } from "@/components/school-rail";
 import { reportLabel, type ReportKind } from "@/domain/reports";
 import type { ReportTable } from "@/lib/report-store";
@@ -60,7 +59,6 @@ export function ReportsBoard(props: {
             </ol>
           </nav>
           <div className="flex items-center gap-[10px]">
-            <ThemeToggle />
             <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-accsoft text-[10px] font-semibold text-accent">
               {props.userInitials}
             </span>

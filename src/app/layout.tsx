@@ -4,14 +4,13 @@ import { DM_Sans, Geist_Mono, Instrument_Sans } from "next/font/google";
 import { SerwistProvider } from "@serwist/next/react";
 
 import { InstallPrompt } from "@/components/install-prompt";
+import { themeBoot } from "@/lib/theme";
 
 import "./globals.css";
 
 const dm = DM_Sans({ subsets: ["latin"], variable: "--font-dm" });
 const instrument = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument" });
 const geist = Geist_Mono({ subsets: ["latin"], variable: "--font-geist" });
-
-const themeBoot = `try{if(sessionStorage.getItem("sa-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}`;
 
 export const metadata: Metadata = {
   applicationName: "University Smart-Assets",
@@ -36,7 +35,7 @@ export const viewport: Viewport = {
 };
 
 /**
- * Root shell. A cold visit stays bright. Dark mode is only the visit switch.
+ * Root shell. No stored choice follows the computer. A stored light or dark choice wins.
  */
 export default function RootLayout({ children }: { readonly children: ReactNode }) {
   return (

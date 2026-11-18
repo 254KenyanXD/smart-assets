@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { SignOutButton } from "@/app/home/sign-out-button";
 import { CustodyMark } from "@/components/custody-mark";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 /** Rail labels from the Soft Bento staff and platform frames. */
 export type SchoolNavLabel = "Desk" | "Inventory" | "Reports" | "Staff" | "Audit trail" | "Universities";
@@ -85,10 +86,11 @@ export function SchoolRail(props: {
           <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-accsoft text-[10px] font-semibold text-accent">
             {props.userInitials}
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-[12px] font-semibold text-ink">{props.userName}</p>
             <p className="truncate text-[9.5px] text-ink3">{props.userRoleLabel}</p>
           </div>
+          <ThemeToggle />
         </div>
         <div className="mt-[10px]">
           <SignOutButton />

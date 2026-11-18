@@ -55,7 +55,8 @@ describe("student home borrower badge", () => {
 
   test("keeps the painted bars when the profile has no admission number", async () => {
     const html = await render(null);
-    expect(html).not.toContain("<svg");
+    expect(html).not.toContain('aria-label="Borrower badge"');
+    expect(html).toContain("h-[34px] w-0.5");
     expect(html).toContain("Show this at the desk");
   });
 });

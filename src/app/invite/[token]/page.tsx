@@ -1,6 +1,6 @@
 import { CustodyMark } from "@/components/custody-mark";
 import { Card } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeCorner } from "@/components/theme-toggle";
 import { INVITE_INVALID_MESSAGE } from "@/domain/staff-invite";
 import { orm } from "@/lib/auth-server";
 import { readStaffInvite } from "@/lib/staff-invite-store";
@@ -17,9 +17,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-8">
-      <div className="mb-6 flex w-full max-w-[420px] justify-end">
-        <ThemeToggle />
-      </div>
+      <ThemeCorner />
       <Card>
         <div className="flex items-center gap-3">
           <CustodyMark />

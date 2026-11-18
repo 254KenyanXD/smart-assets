@@ -1,5 +1,5 @@
 import { CustodyMark } from "@/components/custody-mark";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeCorner } from "@/components/theme-toggle";
 import { Card } from "@/components/ui/card";
 
 import { OfflineRetry } from "./offline-retry";
@@ -13,9 +13,7 @@ export const dynamic = "force-static";
 export default function OfflinePage() {
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-8">
-      <div className="mb-6 flex w-full max-w-[420px] justify-end">
-        <ThemeToggle />
-      </div>
+      <ThemeCorner />
       <Card>
         <div className="flex flex-col gap-5">
           <div className="flex items-center gap-3">

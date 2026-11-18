@@ -1,6 +1,6 @@
 import { CustodyMark } from "@/components/custody-mark";
 import { Card } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeCorner } from "@/components/theme-toggle";
 import { RESET_INVALID_MESSAGE } from "@/domain/password-reset";
 import { orm } from "@/lib/auth-server";
 import { readPasswordReset } from "@/lib/password-reset-store";
@@ -17,9 +17,7 @@ export default async function ResetPage({ params }: { params: Promise<{ token: s
 
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-8">
-      <div className="mb-6 flex w-full max-w-[420px] justify-end">
-        <ThemeToggle />
-      </div>
+      <ThemeCorner />
       <Card>
         <div className="flex items-center gap-3">
           <CustodyMark />
