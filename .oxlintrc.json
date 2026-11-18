@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react"],
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "node": true
+  },
+  "settings": {
+    "react": {
+      "version": "19"
+    }
+  },
+  "rules": {
+    // Effect.fn marks a generator that returns a value. It does not yield.
+    "eslint/require-yield": "off"
+  },
+  "ignorePatterns": [
+    "data/**",
+    "drizzle/meta/**",
+    "public/**",
+    "tests/fixtures/**",
+    "next-env.d.ts",
+    ".next/**",
+    "test-results/**",
+    "playwright-report/**",
+    "blob-report/**"
+  ]
+}

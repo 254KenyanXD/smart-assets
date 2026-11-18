@@ -12,7 +12,9 @@
     "db:seed": "bun src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "admin:create": "bun src/db/create-admin.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "lint": "oxlint",
+    "fmt:check": "bun fmt --check"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.18",
@@ -38,6 +40,7 @@
     "@types/react-dom": "^19.3.0",
     "drizzle-kit": "^0.31.11",
     "esbuild": "^0.28.2",
+    "oxlint": "^1.94.0",
     "serwist": "^9.5.13",
     "tailwindcss": "^4.3.5",
     "typescript": "7"
