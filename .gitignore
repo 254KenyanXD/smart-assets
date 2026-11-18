@@ -23,3 +23,7 @@ PROGRESS.md
 # Serwist writes the worker at build time.
 public/sw*
 public/swe-worker*
+
+test-results
+playwright-report
+blob-report
