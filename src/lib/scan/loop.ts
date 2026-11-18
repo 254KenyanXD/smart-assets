@@ -11,7 +11,8 @@ import { acceptHit, scanFormats, type PriorHit, type ScanFormat, type ScanHit } 
  *
  * The native `BarcodeDetector` is used when the browser has one. Otherwise the
  * frame is rasterised and sent to the worker, so no JavaScript decoder ever
- * runs on the main thread. React is not involved until a hit is accepted.
+ * runs on the main thread. React is not involved until a hit is accepted, or
+ * until a measuring caller is handed one sample per frame.
  */
 
 /** One barcode a native detector reported. */
@@ -44,11 +45,27 @@ export interface ScanLoop {
   stop(): void;
 }
 
-/** What the desk hands the loop. */
+/** One completed frame, for the scanner lab to time. */
+export interface ScanSample {
+  /** Every usable read in that frame. Empty when the frame held nothing. */
+  readonly hits: readonly ScanHit[];
+  /** How long the decode took, in milliseconds. */
+  readonly ms: number;
+}
+
+/** What the caller hands the loop. */
 export interface ScanLoopOptions {
   readonly video: HTMLVideoElement;
-  /** Called once per accepted read, after the vibration and the tone. */
-  readonly onHit: (hit: ScanHit) => void;
+  /**
+   * Called once per accepted read, after the vibration and the tone.
+   * Not used when `onSample` is set.
+   */
+  readonly onHit?: (hit: ScanHit) => void;
+  /**
+   * Called after every completed frame, hit or not, when the caller is measuring.
+   * A loop with this set keeps running: no vibration, no tone, no stop on a hit.
+   */
+  readonly onSample?: (sample: ScanSample) => void;
 }
 
 /** How long the hit feedback tone lasts, in seconds. */
@@ -88,11 +105,12 @@ function createDetector(): Detector | null {
 /**
  * Starts a scan loop over one video element.
  *
- * @param options - The video to read and the callback for an accepted read.
+ * @param options - The video to read, and either the callback for an accepted
+ * read (one-shot, the desk) or the callback for every completed frame (the lab).
  * @returns A loop with `start` and `stop`.
  */
 export function createScanLoop(options: ScanLoopOptions): ScanLoop {
-  const { video, onHit } = options;
+  const { video, onHit, onSample } = options;
   const detector = createDetector();
 
   let running = false;
@@ -237,14 +255,24 @@ export function createScanLoop(options: ScanLoopOptions): ScanLoop {
   function announce(hit: ScanHit): void {
     vibrate();
     beep();
-    onHit(hit);
+    onHit?.(hit);
     stop();
   }
 
   async function step(): Promise<void> {
     if (!running) return;
+    const started = performance.now();
     const hits = await read();
+    const elapsed = performance.now() - started;
     if (!running) return;
+    if (onSample !== undefined) {
+      // The lab wants a number for every frame, including the empty ones, and
+      // it decides for itself when to stop. A read is not an event there, so
+      // nothing is announced and the loop keeps going.
+      onSample({ hits, ms: elapsed });
+      schedule();
+      return;
+    }
     const now = performance.now();
     for (const hit of hits) {
       if (!acceptHit(prior, hit.text, now)) continue;
