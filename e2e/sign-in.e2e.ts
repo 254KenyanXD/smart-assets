@@ -46,6 +46,12 @@ test.describe.serial("sign-in flow", () => {
   });
 
   test("the review school administrator signs in through the email form", async () => {
+    await page.goto(`${BASE}/sign-in`);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByText("The desk records who has the asset.")).toBeHidden();
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(page.getByText("The desk records who has the asset.")).toBeVisible();
+
     await submitEmail(page, ADMIN_EMAIL);
 
     // The link path is offered but not taken: it would call the live student portal.
@@ -83,10 +89,18 @@ test.describe.serial("sign-in flow", () => {
     await expect(page).toHaveURL(/\/home$/);
 
     const studentNav = page.getByRole("navigation", { name: "Student" });
+    await expect(studentNav).toBeHidden();
+    await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+    const wide = await page.locator("#profile").evaluate((el) => el.getBoundingClientRect().width);
+    expect(wide).toBeGreaterThan(700);
+
+    await page.setViewportSize({ width: 390, height: 844 });
     await expect(studentNav).toBeVisible();
     await expect(studentNav.getByText("Scan", { exact: true })).toBeVisible();
     await expect(studentNav.getByText("Loans", { exact: true })).toBeVisible();
     await expect(studentNav.getByText("Profile", { exact: true })).toBeVisible();
+    const narrow = await page.locator("#profile").evaluate((el) => el.getBoundingClientRect().width);
+    expect(narrow).toBeLessThanOrEqual(390);
 
     // Scan is a label on this page, not a control.
     await expect(page.getByRole("button", { name: /scan/i })).toHaveCount(0);
