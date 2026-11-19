@@ -21,11 +21,13 @@ const origin = "http://localhost:3000";
 const portalPassword = "portal-secret-not-stored";
 const localPassword = "local-secret-not-stored";
 
+const portalPhoto = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
 const dashboardHtml = `
   <div class="row mb-2"><label>Reg. No.</label><span class="badge">23-1670</span></div>
   <div class="row mb-2"><label>Name</label><span class="badge">Sample Student</span></div>
   <div class="row mb-2"><label>Programme</label><span class="badge">BSc Computer Science</span></div>
-  <img class="rounded-circle" src="/photo.jpg" />
+  <img class="rounded-circle" src="${portalPhoto}" />
 `;
 
 function memoryDatabase() {
@@ -283,6 +285,13 @@ describe("login", () => {
     const profile = orm.select().from(schema.studentProfiles).get();
     expect(profile?.officialId).toBe("23-1670");
     expect(profile?.fullName).toBe("Sample Student");
+    expect(profile?.photoUrl).toBe(portalPhoto);
+    const linkedUser = orm
+      .select({ image: schema.user.image })
+      .from(schema.user)
+      .where(eq(schema.user.email, "sample231670@daystar.ac.ke"))
+      .get();
+    expect(linkedUser?.image).toBe(portalPhoto);
 
     const signedIn = await post(auth, "/api/auth/sign-in/email", {
       email: "sample231670@daystar.ac.ke",
