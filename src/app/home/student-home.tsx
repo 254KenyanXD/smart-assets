@@ -47,7 +47,7 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
   const university = data.universityName.toUpperCase();
   const badge = badgeSvg(data.officialId);
   return (
-    <div className="flex w-full max-w-[390px] flex-col gap-4 pb-8">
+    <div className="flex w-full max-w-[390px] flex-col gap-4 pb-8 lg:max-w-none lg:gap-8 lg:pb-2">
       <header id="profile" className="flex items-center gap-2.5">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accsoft text-xs font-semibold text-accent">
           {data.initials}
@@ -56,12 +56,16 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
           <p className="text-[15px] font-semibold text-ink">{data.name}</p>
           <p className="text-[11px] text-ink3">{data.meta}</p>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
           <ThemeToggle />
+          <div className="hidden lg:block">
+            <SignOutButton />
+          </div>
         </div>
       </header>
 
-      <section className="flex flex-col gap-3 rounded-[18px] bg-deep px-[18px] py-[18px] text-on-deep">
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] xl:gap-12">
+      <section className="flex flex-col gap-3 rounded-[18px] bg-deep px-[18px] py-[18px] text-on-deep lg:sticky lg:top-8">
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-semibold tracking-[0.16em] text-[#A9C7AD]">{university}</p>
           <p className="rounded-full bg-[#254430] px-2.5 py-1 text-[10px] font-medium text-[#D8E8D6]">BORROWER</p>
@@ -86,13 +90,14 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
           <div
             role="img"
             aria-label="Borrower badge"
-            className="flex items-center justify-center rounded-lg bg-white p-3 [&>svg]:h-40 [&>svg]:w-40"
+            className="flex items-center justify-center rounded-lg bg-white p-3 [&>svg]:h-40 [&>svg]:w-40 lg:[&>svg]:h-56 lg:[&>svg]:w-56"
             dangerouslySetInnerHTML={{ __html: badge }}
           />
         )}
         <p className="text-xs text-[#A9C7AD]">Show this at the desk</p>
       </section>
 
+      <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
       <section id="loans">
         <div className="mb-2 flex items-baseline justify-between">
           <h2 className="font-display text-lg font-semibold text-ink">On loan</h2>
@@ -121,6 +126,7 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
         <Stat value={String(data.overdue)} label="Overdue" />
       </section>
 
+      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-2 xl:gap-6">
       <section className="rounded-2xl border border-line bg-surface px-4 py-4">
         <h2 className="font-display text-lg font-semibold text-ink">Custody history</h2>
         <p className="mt-1 text-xs leading-relaxed text-ink2">Your own loans, as a spreadsheet and as a PDF.</p>
@@ -140,13 +146,16 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
         </div>
       </section>
 
+      <FoundTag />
+      </div>
+
       <p className="text-xs leading-relaxed text-ink3">
         Returns and condition checks are recorded by an attendant at the desk.
       </p>
+      </div>
+      </div>
 
-      <FoundTag />
-
-      <nav className="grid grid-cols-4 text-center text-[11px] text-ink3" aria-label="Student">
+      <nav className="grid grid-cols-4 text-center text-[11px] text-ink3 lg:hidden" aria-label="Student">
         <span className="font-semibold text-accent" aria-current="page">
           Home
         </span>
@@ -155,7 +164,9 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
         <span>Profile</span>
       </nav>
 
-      <SignOutButton />
+      <div className="lg:hidden">
+        <SignOutButton />
+      </div>
     </div>
   );
 }

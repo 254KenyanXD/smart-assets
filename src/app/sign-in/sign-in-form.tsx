@@ -142,7 +142,7 @@ export function SignInForm() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 lg:hidden">
         <CustodyMark />
         <div>
           <p className="font-mono text-[11px] font-semibold tracking-[0.14em] text-ink3">UNIVERSITY SMART-ASSETS</p>
@@ -152,7 +152,7 @@ export function SignInForm() {
 
       <div>
         <h1 className="font-display text-[32px] font-semibold tracking-tight text-ink">Sign in</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink2">Sign in with your university email.</p>
+        <p className="mt-2 text-sm leading-relaxed text-ink2 lg:hidden">Sign in with your university email.</p>
       </div>
 
       {resolved === null ? (

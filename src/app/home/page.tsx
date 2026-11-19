@@ -65,7 +65,7 @@ export default async function HomePage() {
       overdue: custody.overdue,
     };
     return (
-      <main className="flex min-h-screen flex-col items-center bg-bg px-5 py-6">
+      <main className="flex min-h-screen flex-col items-center bg-bg px-5 py-6 sm:px-6 lg:px-10 lg:py-10 xl:px-14 2xl:px-20">
         <StudentHome data={data} />
       </main>
     );
