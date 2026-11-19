@@ -18,8 +18,10 @@ export interface StudentLoanView {
 export interface StudentHomeData {
   /** Name from the portal profile, or the account name. */
   readonly name: string;
-  /** Two-letter mark beside the name. */
+  /** Two-letter mark used when the profile has no photo. */
   readonly initials: string;
+  /** Portal photo already stored on the profile. Blank values count as missing. */
+  readonly photoUrl: string | null;
   /** Admission number and programme, when the profile has them. */
   readonly meta: string;
   /** University on this session. */
@@ -46,12 +48,17 @@ export interface StudentHomeData {
 export function StudentHome({ data }: { readonly data: StudentHomeData }) {
   const university = data.universityName.toUpperCase();
   const badge = badgeSvg(data.officialId);
+  const photo = portraitSrc(data.photoUrl);
   return (
     <div className="flex w-full max-w-[390px] flex-col gap-4 pb-8 lg:max-w-none lg:gap-8 lg:pb-2">
       <header id="profile" className="flex items-center gap-2.5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accsoft text-xs font-semibold text-accent">
-          {data.initials}
-        </div>
+        {photo === null ? (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accsoft text-xs font-semibold text-accent">
+            {data.initials}
+          </div>
+        ) : (
+          <img src={photo} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+        )}
         <div className="min-w-0">
           <p className="text-[15px] font-semibold text-ink">{data.name}</p>
           <p className="text-[11px] text-ink3">{data.meta}</p>
@@ -178,6 +185,17 @@ function Stat({ value, label }: { readonly value: string; readonly label: string
       <p className="mt-1 text-[10px] leading-tight text-ink3">{label}</p>
     </div>
   );
+}
+
+/**
+ * The portrait to show. A blank stored value keeps the initials.
+ *
+ * @param photoUrl - Value from `student_profiles.photo_url`.
+ * @returns The image source, or null when there is nothing to show.
+ */
+function portraitSrc(photoUrl: string | null): string | null {
+  const value = photoUrl?.trim() ?? "";
+  return value.length > 0 ? value : null;
 }
 
 /**

@@ -13,6 +13,7 @@ process.env.BETTER_AUTH_SECRET ??= "test-secret-that-is-long-enough";
 interface HomeData {
   readonly name: string;
   readonly initials: string;
+  readonly photoUrl: string | null;
   readonly meta: string;
   readonly universityName: string;
   readonly officialId: string | null;
@@ -23,10 +24,11 @@ interface HomeData {
   readonly overdue: number;
 }
 
-function homeData(officialId: string | null): HomeData {
+function homeData(officialId: string | null, photoUrl: string | null = null): HomeData {
   return {
     name: "Harris Wesley Mwasi",
     initials: "HM",
+    photoUrl,
     meta: "23-1943 - Applied Computer Science",
     universityName: "Daystar University",
     officialId,
@@ -38,9 +40,9 @@ function homeData(officialId: string | null): HomeData {
   };
 }
 
-async function render(officialId: string | null): Promise<string> {
+async function render(officialId: string | null, photoUrl: string | null = null): Promise<string> {
   const { StudentHome } = await import("@/app/home/student-home");
-  return renderToStaticMarkup(createElement(StudentHome, { data: homeData(officialId) }));
+  return renderToStaticMarkup(createElement(StudentHome, { data: homeData(officialId, photoUrl) }));
 }
 
 describe("student home borrower badge", () => {
@@ -58,5 +60,18 @@ describe("student home borrower badge", () => {
     expect(html).not.toContain('aria-label="Borrower badge"');
     expect(html).toContain("h-[34px] w-0.5");
     expect(html).toContain("Show this at the desk");
+  });
+
+  test("shows the stored portal photo in place of the initials", async () => {
+    const photo = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    const html = await render("23-1943", photo);
+    expect(html).toContain(`src="${photo}"`);
+    expect(html).not.toContain(">HM<");
+  });
+
+  test("keeps the initials when the profile has no photo", async () => {
+    const html = await render("23-1943", "   ");
+    expect(html).toContain(">HM<");
+    expect(html).not.toContain("<img");
   });
 });

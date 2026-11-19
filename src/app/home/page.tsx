@@ -51,6 +51,7 @@ export default async function HomePage() {
     const data: StudentHomeData = {
       name: profile?.fullName ?? session.user.name,
       initials: initials(profile?.fullName ?? session.user.name),
+      photoUrl: profile?.photoUrl ?? null,
       meta: studentMeta(profile?.officialId, profile?.programme, session.user.email),
       universityName: university?.name ?? "University",
       officialId: profile?.officialId ?? null,
