@@ -11,13 +11,11 @@ import { findBorrower } from "@/lib/asset-store";
 import { auth, orm, runtime } from "@/lib/auth-server";
 import { Service as Custody, type Actor } from "@/services/custody";
 
-/** What a desk form should say. A found receipt never carries a borrower. */
 export interface DeskResult {
-  /** Error sentence, or null when the write committed. */
   readonly message: string | null;
-  /** Title from a found-item receipt, or null when this action was not a find. */
+
   readonly foundTitle: string | null;
-  /** Location from that receipt. Null means no location is recorded, or this was not a find. */
+
   readonly foundLocation: string | null;
 }
 
@@ -26,15 +24,13 @@ const emptyFound: Pick<DeskResult, "foundTitle" | "foundLocation"> = {
   foundLocation: null,
 };
 
-/** What the desk may show about a borrower before the checkout is confirmed. */
 export interface BorrowerPreview {
-  /** Error sentence, or null when the borrower was found. */
   readonly message: string | null;
-  /** Borrower name, or null when nobody matched. */
+
   readonly name: string | null;
-  /** Admission number, or null when the profile has none or nobody matched. */
+
   readonly officialId: string | null;
-  /** Portal photo, or null when there is none. */
+
   readonly photoUrl: string | null;
 }
 
@@ -73,10 +69,6 @@ function isActor(value: Actor | DeskResult): value is Actor {
   return "userId" in value;
 }
 
-/**
- * The signed-in attendant for the active university.
- * Hiding a field is not this check: the desk endpoint asks the membership row.
- */
 async function attendant(): Promise<Actor | DeskResult> {
   const who = await actor();
   if (!isActor(who)) {
@@ -105,11 +97,6 @@ function failureMessage(error: unknown): string {
   return "The change was not recorded.";
 }
 
-/**
- * Parse a date-only field as UTC midnight.
- *
- * @param value - `YYYY-MM-DD` from a date input.
- */
 function utcDay(value: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
@@ -134,12 +121,6 @@ function refresh(): void {
   revalidatePath("/home");
 }
 
-/**
- * Check an asset out to the student typed at the desk.
- * The borrower is an email or an admission number. The attendant gate stays in the custody service.
- *
- * @param formData - Tag, student key, and an optional due date.
- */
 export async function checkoutAsset(formData: FormData): Promise<DeskResult> {
   const who = await actor();
   if (!isActor(who)) {
@@ -176,12 +157,6 @@ export async function checkoutAsset(formData: FormData): Promise<DeskResult> {
   return { message: null, ...emptyFound };
 }
 
-/**
- * Name the borrower before the checkout is confirmed. Reads only.
- * The key is an email or an admission number, and a non-attendant is refused.
- *
- * @param key - What the attendant typed or scanned.
- */
 export async function previewBorrower(key: string): Promise<BorrowerPreview> {
   const who = await attendant();
   if (!isActor(who)) {
@@ -199,11 +174,6 @@ export async function previewBorrower(key: string): Promise<BorrowerPreview> {
   };
 }
 
-/**
- * Check an open loan back in with a condition grade.
- *
- * @param formData - Asset id and condition key.
- */
 export async function checkInAsset(formData: FormData): Promise<DeskResult> {
   const who = await actor();
   if (!isActor(who)) {
@@ -228,11 +198,6 @@ export async function checkInAsset(formData: FormData): Promise<DeskResult> {
   return { message: null, ...emptyFound };
 }
 
-/**
- * Report a found tag. The result is the title and the location only.
- *
- * @param formData - Tag and an optional note.
- */
 export async function reportFound(formData: FormData): Promise<DeskResult> {
   const who = await actor();
   if (!isActor(who)) {

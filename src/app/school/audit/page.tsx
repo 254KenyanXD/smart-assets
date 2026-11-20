@@ -5,10 +5,6 @@ import { orm } from "@/lib/auth-server";
 import { requireUniversityRole } from "../guard";
 import { AuditBoard } from "./audit-board";
 
-/**
- * Audit trail for the signed-in university.
- * A department head, an attendant, and a student are refused. Hiding the rail row is not this check.
- */
 export default async function AuditPage() {
   const access = await requireUniversityRole(["school_admin"]);
   const role = parseStaffRole(access.role);

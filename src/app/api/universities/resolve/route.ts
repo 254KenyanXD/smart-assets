@@ -16,10 +16,6 @@ function clientIp(request: Request): string {
   return "local";
 }
 
-/**
- * Detect a university from an email domain.
- * The response never says whether a local account exists.
- */
 export async function GET(request: Request): Promise<Response> {
   if (!allow(clientIp(request), Date.now())) {
     return Response.json({ message: "Too many lookups. Wait a minute and try again." }, { status: 429 });

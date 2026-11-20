@@ -5,24 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { createScanLoop, type ScanLoop } from "@/lib/scan/loop";
 
-/** Said when the browser will not open the camera. Typed entry stays on the form. */
 const CAMERA_FAILED = "The camera did not start. Type the tag.";
 
-/** Everything the desk Scan button needs. */
 export interface ScanPanelProps {
-  /** Button words. The desk switches this when the next press is for a badge. */
   readonly label: string;
-  /** Called once per accepted read, after the camera has been released. */
+
   readonly onHit: (text: string) => void;
 }
 
-/**
- * The desk camera: one button, one read, then the camera is released.
- *
- * The loop decodes off the main thread and stops itself on the first accepted
- * read. This panel only starts it, shows the preview frame, and stops the
- * camera tracks so the phone does not keep the light on after a read.
- */
 export function ScanPanel({ label, onHit }: ScanPanelProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const loopRef = useRef<ScanLoop | null>(null);
@@ -31,7 +21,6 @@ export function ScanPanel({ label, onHit }: ScanPanelProps) {
   const [active, setActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** Stops the loop, the worker and every camera track. Safe to call twice. */
   const stopCamera = useCallback(() => {
     const loop = loopRef.current;
     loopRef.current = null;

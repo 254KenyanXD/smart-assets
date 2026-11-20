@@ -11,12 +11,6 @@ const LINE = rgb(0xdd / 255, 0xe6 / 255, 0xd6 / 255);
 const BAND = rgb(0xe8 / 255, 0xf0 / 255, 0xe2 / 255);
 const ACCENT = rgb(0x2d / 255, 0x5e / 255, 0x3a / 255);
 
-/**
- * Escape one cell for RFC 4180.
- * A caller that wants spreadsheet-formula guarding does that before this step.
- *
- * @param value - Cell text. Null and undefined become an empty cell.
- */
 export function csvCell(value: string | number | null | undefined): string {
   const text = value === null || value === undefined ? "" : String(value);
   if (/[",\r\n]/.test(text)) {
@@ -25,12 +19,6 @@ export function csvCell(value: string | number | null | undefined): string {
   return text;
 }
 
-/**
- * Whether a text cell would be executed as a formula by a spreadsheet.
- * A leading minus that is only an integer is left alone, so a negative book value stays a number.
- *
- * @param value - Cell text before RFC 4180 escaping.
- */
 function needsFormulaGuard(value: string): boolean {
   if (value.length === 0) {
     return false;
@@ -42,13 +30,6 @@ function needsFormulaGuard(value: string): boolean {
   return first === "-" && !/^-\d+$/.test(value);
 }
 
-/**
- * Serialize a table as UTF-8 CSV with a byte order mark and CRLF rows.
- * Text that a spreadsheet would treat as a formula is prefixed with a quote mark.
- *
- * @param header - Column names. This row is not a data row.
- * @param rows - Data rows. Each row should have one cell per header column.
- */
 export function csvDocument(header: readonly string[], rows: readonly (readonly string[])[]): string {
   const lines = [header, ...rows].map((row) =>
     row
@@ -61,12 +42,6 @@ export function csvDocument(header: readonly string[], rows: readonly (readonly 
   return `\uFEFF${lines.join("\r\n")}\r\n`;
 }
 
-/**
- * Map characters that Helvetica cannot encode onto ASCII.
- * Standard PDF fonts have no em dash, smart quotes, or bullet.
- *
- * @param value - Text that may contain those characters.
- */
 export function winAnsi(value: string): string {
   return value
     .replace(/[\u2010-\u2015]/g, "-")
@@ -77,43 +52,32 @@ export function winAnsi(value: string): string {
     .replace(/[^\x00-\xFF]/g, "?");
 }
 
-/** One letterhead PDF and the table it was built from. */
 export interface LetterheadInput {
-  /** University name in the letterhead and the footer. */
   readonly universityName: string;
-  /** Department line. "Whole university" when assets are not cut by department. */
+
   readonly department: string;
-  /** Report title. */
+
   readonly title: string;
-  /** Period and filter summary. */
+
   readonly period: string;
-  /** Person who downloaded the file. */
+
   readonly generatedBy: string;
-  /** Clock reading, ISO UTC. */
+
   readonly generatedAt: string;
-  /** Sentences under the header. They are not data rows. */
+
   readonly notes: readonly string[];
-  /** Column names. */
+
   readonly header: readonly string[];
-  /** Data rows, already labelled. */
+
   readonly rows: readonly (readonly string[])[];
 }
 
-/** Bytes of one PDF and how many pages it used. */
 export interface LetterheadPdf {
-  /** PDF bytes. */
   readonly bytes: Uint8Array;
-  /** Page count after the table has flowed. */
+
   readonly pageCount: number;
 }
 
-/**
- * Break text into lines that fit a character budget.
- * A word longer than the budget is split, so a long tag cannot run off the page.
- *
- * @param text - Already passed through `winAnsi` when it will be drawn.
- * @param maxChars - Maximum characters on one line. At least 1.
- */
 function wrapText(text: string, maxChars: number): string[] {
   const limit = Math.max(1, maxChars);
   if (text.length <= limit) {
@@ -159,12 +123,6 @@ function wrapText(text: string, maxChars: number): string[] {
   return out.length > 0 ? out : [""];
 }
 
-/**
- * Build the letterhead PDF for one report table.
- * The footer is drawn after the page count is known: university name on the left, `Page n of m` on the right.
- *
- * @param input - Header fields and the same rows the CSV uses.
- */
 export async function letterheadPdf(input: LetterheadInput): Promise<LetterheadPdf> {
   const doc = await PDFDocument.create();
   doc.setTitle(winAnsi(input.title));

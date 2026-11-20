@@ -1,27 +1,11 @@
 import type { FrameReply, FrameRequest } from "./decode.worker";
 import { acceptHit, scanFormats, type PriorHit, type ScanFormat, type ScanHit } from "./types";
 
-/**
- * The camera loop.
- *
- * One decode is in flight at a time, and the next frame is requested only
- * after the last one was answered. Frames that arrive while a decode is busy
- * are not queued: a queue makes the desk feel slower, because it reads old
- * frames after the tag has already left the view.
- *
- * The native `BarcodeDetector` is used when the browser has one. Otherwise the
- * frame is rasterised and sent to the worker, so no JavaScript decoder ever
- * runs on the main thread. React is not involved until a hit is accepted, or
- * until a measuring caller is handed one sample per frame.
- */
-
-/** One barcode a native detector reported. */
 interface DetectedBarcode {
   readonly rawValue: string;
   readonly format: string;
 }
 
-/** The part of `BarcodeDetector` this loop uses. Not in the DOM type set. */
 interface Detector {
   detect(source: CanvasImageSource): Promise<readonly DetectedBarcode[]>;
 }
@@ -30,48 +14,34 @@ interface DetectorConstructor {
   new (options?: { formats?: readonly string[] }): Detector;
 }
 
-/** One rasterised frame on its way to the worker. */
 interface Frame {
   readonly width: number;
   readonly height: number;
   readonly pixels: ArrayBuffer;
 }
 
-/** A loop that has been created but not started. */
 export interface ScanLoop {
-  /** Begins reading frames from the video. Resolves as soon as the loop is running. */
   start(): Promise<void>;
-  /** Cancels the pending frame, resolves any waiting decode and releases the worker. */
+
   stop(): void;
 }
 
-/** One completed frame, for the scanner lab to time. */
 export interface ScanSample {
-  /** Every usable read in that frame. Empty when the frame held nothing. */
   readonly hits: readonly ScanHit[];
-  /** How long the decode took, in milliseconds. */
+
   readonly ms: number;
 }
 
-/** What the caller hands the loop. */
 export interface ScanLoopOptions {
   readonly video: HTMLVideoElement;
-  /**
-   * Called once per accepted read, after the vibration and the tone.
-   * Not used when `onSample` is set.
-   */
+
   readonly onHit?: (hit: ScanHit) => void;
-  /**
-   * Called after every completed frame, hit or not, when the caller is measuring.
-   * A loop with this set keeps running: no vibration, no tone, no stop on a hit.
-   */
+
   readonly onSample?: (sample: ScanSample) => void;
 }
 
-/** How long the hit feedback tone lasts, in seconds. */
 const TONE_SECONDS = 0.06;
 
-/** Feedback tone, in hertz. High enough to hear over a room full of people. */
 const TONE_HZ = 880;
 
 function toFormat(value: string): ScanFormat | null {
@@ -81,19 +51,12 @@ function toFormat(value: string): ScanFormat | null {
   return null;
 }
 
-/**
- * Builds a native detector, or returns null when the browser has none.
- *
- * @returns A detector restricted to the desk formats, or null.
- */
 function createDetector(): Detector | null {
   const constructor = (globalThis as { BarcodeDetector?: DetectorConstructor }).BarcodeDetector;
   if (constructor === undefined) return null;
   try {
     return new constructor({ formats: [...scanFormats] });
   } catch {
-    // A browser may know the API and refuse one format in the list. Retrying
-    // without the hint keeps the loop working, and the hits are filtered below.
     try {
       return new constructor();
     } catch {
@@ -102,13 +65,6 @@ function createDetector(): Detector | null {
   }
 }
 
-/**
- * Starts a scan loop over one video element.
- *
- * @param options - The video to read, and either the callback for an accepted
- * read (one-shot, the desk) or the callback for every completed frame (the lab).
- * @returns A loop with `start` and `stop`.
- */
 export function createScanLoop(options: ScanLoopOptions): ScanLoop {
   const { video, onHit, onSample } = options;
   const detector = createDetector();
@@ -142,8 +98,6 @@ export function createScanLoop(options: ScanLoopOptions): ScanLoop {
       oscillator.start(start);
       oscillator.stop(start + TONE_SECONDS);
     } catch {
-      // Sound is feedback, not a requirement. A blocked AudioContext must not
-      // stop the hit from reaching the desk.
     }
   }
 
@@ -266,9 +220,6 @@ export function createScanLoop(options: ScanLoopOptions): ScanLoop {
     const elapsed = performance.now() - started;
     if (!running) return;
     if (onSample !== undefined) {
-      // The lab wants a number for every frame, including the empty ones, and
-      // it decides for itself when to stop. A read is not an event there, so
-      // nothing is announced and the loop keeps going.
       onSample({ hits, ms: elapsed });
       schedule();
       return;

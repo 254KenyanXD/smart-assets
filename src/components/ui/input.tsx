@@ -1,8 +1,5 @@
 import type { InputHTMLAttributes } from "react";
 
-/**
- * Text field on the Soft Bento card.
- */
 export function Input({ className = "", ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input

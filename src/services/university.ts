@@ -23,37 +23,24 @@ const OidcConfig = Schema.Struct({
   enabled: Schema.Literal(false),
 });
 
-/**
- * Adapter settings stored on a university row.
- */
 export const AuthConfig = Schema.Union([DaystarConfig, LocalConfig, OidcConfig]);
 
-/**
- * Parsed `universities.auth_config`.
- */
 export type AuthConfig = typeof AuthConfig.Type;
 
-/**
- * A supported university the login page can continue with.
- */
 export interface SupportedUniversity {
-  /** University id, shared with the organization id. */
   readonly id: string;
-  /** Display name. */
+
   readonly name: string;
-  /** URL slug. */
+
   readonly slug: string;
-  /** Country from the seed row. */
+
   readonly country: string;
-  /** Active universities accept sign-in. Suspended ones do not. */
+
   readonly status: "active" | "suspended";
-  /** Adapter settings. */
+
   readonly authConfig: AuthConfig;
 }
 
-/**
- * What the email field resolved to. No account existence is included.
- */
 export type Resolution =
   | { readonly _tag: "Unknown" }
   | {
@@ -76,54 +63,30 @@ export type Resolution =
       readonly admissionNumber: string | null;
     };
 
-/**
- * A student profile row a caller is allowed to see.
- */
 export interface ListedProfile {
-  /** Account id that owns the profile. */
   readonly userId: string;
-  /** Admission number or other official id, kept whole. */
+
   readonly officialId: string;
-  /** Name returned by the portal or the invite. */
+
   readonly fullName: string;
 }
 
-/**
- * The actor is not a member of the university they asked about.
- */
 export class NotAllowed extends Schema.TaggedError<NotAllowed>()("NotAllowed", {
   message: Schema.String,
 }) {}
 
-/**
- * University lookup and membership guard.
- */
 export interface Interface {
-  /**
-   * Resolve an email to a directory hit or a supported university.
-   *
-   * @param email - Untrusted email text.
-   */
   readonly resolve: (
     email: string,
     universitySlug?: string,
   ) => Effect.Effect<Resolution, EmailAddress.InvalidEmail>;
-  /**
-   * Whether this user may read another university's rows.
-   * A super admin may. Everyone else must be a member of an active university.
-   *
-   * @param input - The actor and the university they are asking about.
-   */
+
   readonly allow: (input: {
     readonly userId: string;
     readonly platformRole: string;
     readonly universityId: string;
   }) => Effect.Effect<boolean>;
-  /**
-   * Student profiles for one university, after the membership guard.
-   *
-   * @param input - The actor and the university they are asking about.
-   */
+
   readonly listProfiles: (input: {
     readonly userId: string;
     readonly platformRole: string;
@@ -131,16 +94,8 @@ export interface Interface {
   }) => Effect.Effect<readonly ListedProfile[], NotAllowed>;
 }
 
-/**
- * University resolution and membership guard.
- */
 export class Service extends Context.Service<Service, Interface>()("@app/University") {}
 
-/**
- * Build the university service over one SQLite database.
- *
- * @param database - Open bun:sqlite database. The caller owns its lifetime.
- */
 export function layer(database: Database): Layer.Layer<Service, never, Directory> {
   const orm = drizzle(database, { schema });
 

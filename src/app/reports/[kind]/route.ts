@@ -8,10 +8,6 @@ import { NotAllowed, Service as Reports, SuspendedUniversity, UnknownReport } fr
 
 export const dynamic = "force-dynamic";
 
-/**
- * Download one report as CSV or PDF.
- * The role check runs again inside the reports service. The link on the page is not the guard.
- */
 export async function GET(request: Request, context: { params: Promise<{ kind: string }> }): Promise<Response> {
   const { kind } = await context.params;
   if (parseReportKind(kind) === null) {

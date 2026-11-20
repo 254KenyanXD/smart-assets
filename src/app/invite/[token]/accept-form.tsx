@@ -6,10 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PendingInvite } from "@/lib/staff-invite-store";
 
-/**
- * Password form for one live staff invite.
- * The token stays in the request body and is not written into the database.
- */
 export function AcceptInviteForm({
   token,
   invite,

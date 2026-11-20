@@ -6,42 +6,24 @@ import { parseDashboard } from "@/lib/identity/profile";
 import { Service as PortalTransport } from "@/lib/identity/portal-transport";
 import { VerifiedIdentity } from "@/lib/identity/verified-identity";
 
-/**
- * Credentials the link form collected. The portal password is redacted.
- */
 export interface VerifyInput {
-  /** University email the student typed. */
   readonly email: string;
-  /** Admission number, prefilled and editable. */
+
   readonly portalUsername: string;
-  /** Portal password. Discarded when verify finishes. */
+
   readonly portalPassword: Redacted.Redacted<string>;
-  /** Adapter settings from the university row. */
+
   readonly portalBase: string;
-  /** Which login JSON body this university's probe selected. */
+
   readonly loginBody: "nested" | "flat";
 }
 
-/**
- * One portal or local identity check.
- */
 export interface Interface {
-  /**
-   * Verify credentials and return the profile.
-   *
-   * @param input - Email, admission number, redacted portal password, and portal settings.
-   */
   readonly verify: (input: VerifyInput) => Effect.Effect<VerifiedIdentity, IdentityFailure>;
 }
 
-/**
- * The identity adapter selected for one university.
- */
 export class Service extends Context.Service<Service, Interface>()("@app/IdentityAdapter") {}
 
-/**
- * Daystar student portal. Staff portal is not this adapter.
- */
 export const daystarLayer = Layer.effect(
   Service,
   Effect.gen(function* () {
@@ -85,9 +67,6 @@ export const daystarLayer = Layer.effect(
   }),
 );
 
-/**
- * Local accounts are invited. This adapter refuses a portal link.
- */
 export const localLayer = Layer.succeed(
   Service,
   Service.of({
@@ -100,9 +79,6 @@ export const localLayer = Layer.succeed(
   }),
 );
 
-/**
- * OIDC is named and switched off. No client is registered.
- */
 export const oidcLayer = Layer.succeed(
   Service,
   Service.of({

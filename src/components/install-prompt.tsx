@@ -11,10 +11,6 @@ interface InstallChoice {
   readonly userChoice: Promise<{ readonly outcome: "accepted" | "dismissed" }>;
 }
 
-/**
- * The browser's install offer, when it fires.
- * No button is shown on browsers that never offer installation.
- */
 export function InstallPrompt() {
   const [offer, setOffer] = useState<InstallChoice | null>(null);
 
@@ -58,7 +54,6 @@ export function InstallPrompt() {
               try {
                 sessionStorage.setItem(DISMISS_KEY, "1");
               } catch {
-                // A blocked session store still hides the bar for this render.
               }
               setOffer(null);
             }}

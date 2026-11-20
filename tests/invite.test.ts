@@ -93,7 +93,6 @@ async function messageOf(response: Response): Promise<string> {
   return body.message ?? "";
 }
 
-/** One invite request body. `role` stays a string so a test can send a bad one. */
 interface InviteBody {
   readonly email: string;
   readonly fullName: string;
@@ -123,7 +122,6 @@ const peter: InviteBody = {
   universityId: "uni_daystar",
 };
 
-/** Sign in the first super admin and return the cookie plus the live auth handle. */
 async function superAdminWorkspace() {
   const database = memoryDatabase();
   const logs: string[] = [];
@@ -141,7 +139,6 @@ async function superAdminWorkspace() {
   return { database, auth, orm, logs, cookie: cookieHeader(signedIn) };
 }
 
-/** Mint one invite through the auth endpoint and return the raw token from the link. */
 async function mintInvite(
   auth: ReturnType<typeof createAuth>["auth"],
   cookie: string,
@@ -157,7 +154,6 @@ async function mintInvite(
   return token;
 }
 
-/** Accept one invite and return the cookie for the new session. */
 async function acceptInvite(
   auth: ReturnType<typeof createAuth>["auth"],
   token: string,
@@ -167,7 +163,6 @@ async function acceptInvite(
   return cookieHeader(response);
 }
 
-/** A super admin, plus a signed-in school administrator for Daystar. */
 async function schoolAdminWorkspace() {
   const workspace = await superAdminWorkspace();
   const token = await mintInvite(workspace.auth, workspace.cookie, grace);

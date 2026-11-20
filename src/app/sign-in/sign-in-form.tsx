@@ -40,10 +40,6 @@ async function errorMessage(response: Response): Promise<string> {
   return "That did not work. Try again.";
 }
 
-/**
- * Email first, then a local password or a one-time portal link.
- * The mark is the Custody logo Harris chose.
- */
 export function SignInForm() {
   const emailForm = useForm<EmailFields>({ defaultValues: { email: "" } });
   const localForm = useForm<LocalFields>({ defaultValues: { password: "" } });

@@ -31,9 +31,8 @@ describe("percentile", () => {
   });
 
   test("the ceiling point skips a sample below it", () => {
-    // ceil(0.5 * 4) = 2, so the answer is index 1, not the 10 and 20 pair.
     expect(percentile([10, 20, 30, 40], 0.5)).toBe(20);
-    // ceil(0.95 * 21) = 20, so index 19 is the slowest but one.
+
     const many = Array.from({ length: 21 }, (_, index) => index + 1);
     expect(percentile(many, 0.95)).toBe(20);
   });

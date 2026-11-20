@@ -17,7 +17,7 @@ const tenants = [
     authConfig: {
       adapter: "daystar-portal",
       portalBase: "https://student.daystar.ac.ke",
-      // The browser sends the nested body. The flat body stays unprobed.
+
       loginBody: "nested",
     },
   },
@@ -28,7 +28,7 @@ const tenants = [
     country: "Kenya",
     domain: "strathmore.edu",
     portalUrl: null,
-    // Local adapter only. This row is a tenancy fixture, not a portal integration.
+
     authConfig: { adapter: "local" },
   },
   {
@@ -42,12 +42,6 @@ const tenants = [
   },
 ] as const;
 
-/**
- * Insert the three universities used for login and the isolation check.
- * Running it again leaves existing rows in place.
- *
- * @param database - Open SQLite database. Migrations must already be applied.
- */
 export function seed(database: Database): void {
   const orm = drizzle(database, { schema });
   const now = new Date();

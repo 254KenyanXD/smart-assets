@@ -6,11 +6,6 @@ import { listUniversityDepartments } from "@/lib/staff-invite-store";
 import { requireUniversityRole } from "../guard";
 import { InventoryBoard, type InventoryRow } from "./inventory-board";
 
-/**
- * Inventory for the signed-in university.
- * A school administrator can register and record moves. A department head can read.
- * An attendant is refused here and uses the desk.
- */
 export default async function InventoryPage() {
   const access = await requireUniversityRole(["school_admin", "dept_head"]);
   const now = new Date();

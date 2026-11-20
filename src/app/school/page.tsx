@@ -5,10 +5,6 @@ import { forbidden, redirect } from "next/navigation";
 import * as schema from "@/db/schema";
 import { auth, orm } from "@/lib/auth-server";
 
-/**
- * School admin entry. There is no designed overview for this tier, so this page only
- * runs the same guard as the staff desk and then hands over to it.
- */
 export default async function SchoolPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session === null) {

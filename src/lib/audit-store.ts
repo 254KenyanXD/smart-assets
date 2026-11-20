@@ -5,29 +5,20 @@ import * as schema from "@/db/schema";
 
 type Orm = BunSQLiteDatabase<typeof schema>;
 
-/** One audit row a school administrator is allowed to read. */
 export interface AuditEntry {
-  /** Audit row id. */
   readonly id: string;
-  /** When it was written, UTC `YYYY-MM-DD HH:MM`. */
+
   readonly at: string;
-  /** Stored action name. */
+
   readonly action: string;
-  /** Actor account name, or an empty string when the account is gone. */
+
   readonly actorName: string;
-  /** Stored target. */
+
   readonly target: string;
-  /** Reason, or the before and after JSON. Empty when the row has neither. */
+
   readonly detail: string;
 }
 
-/**
- * Audit rows for one university, newest first.
- * A row with no university id is a platform row and is not included.
- *
- * @param orm - Drizzle handle.
- * @param universityId - The university whose rows may be shown.
- */
 export function listAudit(orm: Orm, universityId: string): AuditEntry[] {
   const stored = orm
     .select({

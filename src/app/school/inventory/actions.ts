@@ -9,9 +9,7 @@ import { parseAssetState } from "@/domain/asset-state";
 import { auth, runtime } from "@/lib/auth-server";
 import { Service as Custody, type Actor } from "@/services/custody";
 
-/** What a form should say after a write. Null means the table can refresh with no extra sentence. */
 export interface ActionResult {
-  /** Error sentence, or null when the write committed. */
   readonly message: string | null;
 }
 
@@ -50,12 +48,6 @@ function whole(value: string): number | null {
   return Number.isSafeInteger(number) ? number : null;
 }
 
-/**
- * Parse a date-only field as UTC midnight.
- *
- * @param value - `YYYY-MM-DD` from a date input.
- * @returns The instant, or null when the text is not that calendar day.
- */
 function utcDay(value: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
@@ -81,11 +73,6 @@ function failureMessage(error: unknown): string {
   return "The change was not recorded.";
 }
 
-/**
- * Register one asset as procured. The university comes from the session.
- *
- * @param formData - Title, tag, cost, salvage, useful life, and purchase date.
- */
 export async function registerAsset(formData: FormData): Promise<ActionResult> {
   const who = await actor();
   if (!isActor(who)) {
@@ -126,11 +113,6 @@ export async function registerAsset(formData: FormData): Promise<ActionResult> {
   return { message: null };
 }
 
-/**
- * Correct one asset's recorded details. State and condition stay as they are.
- *
- * @param formData - Asset id, title, tag, money, purchase date, and location.
- */
 export async function updateAsset(formData: FormData): Promise<ActionResult> {
   const who = await actor();
   if (!isActor(who)) {
@@ -173,11 +155,6 @@ export async function updateAsset(formData: FormData): Promise<ActionResult> {
   return { message: null };
 }
 
-/**
- * Add a lab, a desk, or a library counter in the signed-in university.
- *
- * @param formData - Name, kind, and an optional department id.
- */
 export async function createLocation(formData: FormData): Promise<ActionResult> {
   const who = await actor();
   if (!isActor(who)) {
@@ -204,11 +181,6 @@ export async function createLocation(formData: FormData): Promise<ActionResult> 
   return { message: null };
 }
 
-/**
- * Move an asset along the record-keeping list. Checkout stays on the attendant desk.
- *
- * @param formData - Asset id and the target state.
- */
 export async function recordMove(formData: FormData): Promise<ActionResult> {
   const who = await actor();
   if (!isActor(who)) {

@@ -11,28 +11,22 @@ import { InviteForm } from "./invite-form";
 
 const staffRoles = new Set(["school_admin", "dept_head", "attendant"]);
 
-/** One university row on the platform desk. */
 interface TenantRow {
-  /** University id. */
   readonly id: string;
-  /** Display name. */
+
   readonly name: string;
-  /** Stored country. */
+
   readonly country: string;
-  /** Email domains for this university, joined for the table. */
+
   readonly domains: string;
-  /** Auth adapter name from the stored config, or empty when it is missing. */
+
   readonly adapter: string;
-  /** School administrators, department heads, and attendants. Students are not staff. */
+
   readonly staff: number;
-  /** Stored status word. */
+
   readonly status: string;
 }
 
-/**
- * Platform desk for the super admin: the universities on this deployment, and one staff invite.
- * Everyone else gets 403. There is no control here for adding or suspending a university.
- */
 export default async function AdminPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session === null || session.user.platformRole !== "super_admin") {
@@ -240,12 +234,6 @@ export default async function AdminPage() {
   );
 }
 
-/**
- * One count tile from the Soft Bento platform frame.
- *
- * @param value - Count taken from the database.
- * @param label - Tile caption.
- */
 function SummaryTile(props: { readonly value: number; readonly label: string }) {
   return (
     <div className="flex flex-col gap-[3px] rounded-[14px] bg-alt p-[14px]">
@@ -255,12 +243,6 @@ function SummaryTile(props: { readonly value: number; readonly label: string }) 
   );
 }
 
-/**
- * Two-letter mark for the signed-in user.
- *
- * @param name - Account name.
- * @returns Up to two uppercase letters, or a question mark when the name is empty.
- */
 function initials(name: string): string {
   const parts = name.split(" ").filter((part) => part.length > 0);
   const first = parts[0]?.[0] ?? "";
@@ -269,11 +251,6 @@ function initials(name: string): string {
   return mark.length > 0 ? mark : "?";
 }
 
-/**
- * Adapter name stored on the university, when the config has one.
- *
- * @param authConfig - JSON column from `universities.auth_config`.
- */
 function adapterOf(authConfig: unknown): string {
   if (typeof authConfig !== "object" || authConfig === null || !("adapter" in authConfig)) {
     return "";
@@ -282,11 +259,6 @@ function adapterOf(authConfig: unknown): string {
   return typeof adapter === "string" ? adapter : "";
 }
 
-/**
- * Status word for the table. Known values are titled. Anything else stays as stored.
- *
- * @param status - `universities.status`.
- */
 function statusLabel(status: string): string {
   if (status === "active") {
     return "Active";
@@ -311,12 +283,6 @@ function counted(count: number, singular: string, plural: string): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-/**
- * Words for one account row. A membership role wins over the platform role.
- *
- * @param platformRole - `user.platform_role`.
- * @param memberRole - University role, or null when the account has no membership on this row.
- */
 function accountRole(platformRole: string, memberRole: string | null): string {
   if (memberRole === null) {
     return platformRole === "super_admin" ? "Platform administrator" : "No university role";

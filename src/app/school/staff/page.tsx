@@ -9,10 +9,6 @@ import { listStaffDirectory, listUniversityDepartments } from "@/lib/staff-invit
 
 import { StaffBoard, type StaffDepartmentChoice, type StaffDisplayRow } from "./staff-board";
 
-/**
- * Staff desk for one university. A school admin is the only role that reaches this page:
- * a super admin already has /admin, and students and attendants must not see staff records.
- */
 export default async function StaffPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session === null) {
@@ -63,12 +59,6 @@ export default async function StaffPage() {
   );
 }
 
-/**
- * Two-letter mark for the signed-in user.
- *
- * @param name - Account or profile name.
- * @returns Up to two uppercase letters, or a question mark when the name is empty.
- */
 function initials(name: string): string {
   const parts = name.split(" ").filter((part) => part.length > 0);
   const first = parts[0]?.[0] ?? "";

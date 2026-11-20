@@ -2,11 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-/**
- * The home imports the desk actions through the found-tag card, and those boot
- * the auth runtime. Point it at a memory database so the render does not touch
- * the working copy of `data/app.db`. Both values are set before that import.
- */
 process.env.DATABASE_URL = "sqlite::memory:";
 process.env.BETTER_AUTH_SECRET ??= "test-secret-that-is-long-enough";
 
@@ -51,7 +46,7 @@ describe("student home borrower badge", () => {
     expect(html).toContain("<svg");
     expect(html).toContain('aria-label="Borrower badge"');
     expect(html).toContain("Show this at the desk");
-    // The payload is the admission number, so the text is already on the card.
+
     expect(html).toContain("23-1943");
   });
 

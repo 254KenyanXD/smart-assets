@@ -10,50 +10,26 @@ const LoginResponse = Schema.Struct({
   message: Schema.optionalKey(Schema.String),
 });
 
-/**
- * A portal session cookie header captured from the login response.
- */
 export interface PortalSession {
-  /** Cookie header to send on the next portal request. */
   readonly cookieHeader: string;
 }
 
-/**
- * HTTP calls the Daystar adapter is allowed to make.
- * The password is redacted and is not written to a log.
- */
 export interface Interface {
-  /**
-   * Sign in to the student portal.
-   *
-   * @param input - Base URL, admission number, redacted password, and which JSON body to send.
-   */
   readonly login: (input: {
     readonly baseUrl: string;
     readonly username: string;
     readonly password: Redacted.Redacted<string>;
     readonly body: "nested" | "flat";
   }) => Effect.Effect<PortalSession, InvalidCredentials | PortalUnavailable>;
-  /**
-   * Fetch the dashboard HTML with the session cookies.
-   *
-   * @param input - Portal base URL and the cookie header from login.
-   */
+
   readonly dashboard: (input: {
     readonly baseUrl: string;
     readonly cookieHeader: string;
   }) => Effect.Effect<string, PortalUnavailable>;
 }
 
-/**
- * Daystar portal HTTP transport.
- */
 export class Service extends Context.Service<Service, Interface>()("@app/PortalTransport") {}
 
-/**
- * Live transport. Cookies are taken from `Set-Cookie` by hand.
- * The nested login body is the browser shape. `flat` is kept for the probe and is not the default.
- */
 export const layer = Layer.sync(Service, () =>
   Service.of({
     login: Effect.fn("PortalTransport.login")(function* (input) {

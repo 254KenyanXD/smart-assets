@@ -9,31 +9,22 @@ import { reportTitle, type ReportKind, type ReportScope } from "@/domain/reports
 
 type Orm = BunSQLiteDatabase<typeof schema>;
 
-/** One report table. The CSV and the PDF are built from `header` and `rows` only. */
 export interface ReportTable {
-  /** Which report this is. */
   readonly kind: ReportKind;
-  /** Title for the letterhead and the page. */
+
   readonly title: string;
-  /** Department line. Assets are not cut by department until they sit at one. */
+
   readonly department: string;
-  /** Period and filter summary. */
+
   readonly period: string;
-  /** Sentences that explain the table. They are not data rows. */
+
   readonly notes: readonly string[];
-  /** Column names. */
+
   readonly header: readonly string[];
-  /** Labelled data rows. */
+
   readonly rows: readonly (readonly string[])[];
 }
 
-/**
- * Load one report for one university.
- * The query always names the university. A day or borrower cut is applied to that result.
- *
- * @param orm - Drizzle handle.
- * @param input - University, kind, scope, and the clock reading used for age and the UTC day.
- */
 export function loadReport(
   orm: Orm,
   input: {

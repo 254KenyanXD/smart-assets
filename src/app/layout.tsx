@@ -34,9 +34,6 @@ export const viewport: Viewport = {
   themeColor: "#F1F4EF",
 };
 
-/**
- * Root shell. No stored choice follows the computer. A stored light or dark choice wins.
- */
 export default function RootLayout({ children }: { readonly children: ReactNode }) {
   return (
     <html lang="en" className={`${dm.variable} ${instrument.variable} ${geist.variable}`} suppressHydrationWarning>

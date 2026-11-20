@@ -14,34 +14,22 @@ import {
 
 type Orm = BunSQLiteDatabase<typeof schema>;
 
-/** What the accept page is allowed to show for a live invite. */
 export interface PendingInvite {
-  /** Display name from the invite. */
   readonly fullName: string;
-  /** Email the account will use. */
+
   readonly email: string;
-  /** University role granted by the invite. */
+
   readonly role: StaffRole;
-  /** Words for that role. */
+
   readonly roleLabel: string;
-  /** University name, already looked up. */
+
   readonly universityName: string;
 }
 
-/** Why a create call did not mint a link. */
 export type CreateInviteFailure = "duplicate" | "unknown-university" | "unknown-department" | "suspended";
 
-/** Why an accept call did not create an account. */
 export type AcceptInviteFailure = "invalid" | "email-taken" | "suspended";
 
-/**
- * Mint one staff invite and return the raw token once.
- * The database stores only the hash.
- *
- * @param orm - Open Drizzle handle.
- * @param input - Who is invited, by whom, and the raw token the caller generated.
- * @returns The raw token when the row was written, or why it was not.
- */
 export function createStaffInvite(
   orm: Orm,
   input: {
@@ -91,7 +79,7 @@ export function createStaffInvite(
     .from(schema.user)
     .where(eq(schema.user.email, email))
     .get();
-  // Email is the platform login, so a pending invite reserves it in every university.
+
   const pending = orm
     .select({ id: schema.staffInvites.id })
     .from(schema.staffInvites)
@@ -146,14 +134,6 @@ export function createStaffInvite(
   return { _tag: "created", token: input.token };
 }
 
-/**
- * Read an invite for the accept page.
- *
- * @param orm - Open Drizzle handle.
- * @param token - The raw token from the URL.
- * @param now - The clock reading for expiry.
- * @returns The public fields, or invalid. The reason is not returned.
- */
 export function readStaffInvite(orm: Orm, token: string, now: Date): PendingInvite | null {
   const row = findByToken(orm, token);
   if (row === null || row.universityId === null) {
@@ -187,14 +167,6 @@ export function readStaffInvite(orm: Orm, token: string, now: Date): PendingInvi
   };
 }
 
-/**
- * Consume a live invite and create the credential account plus membership.
- * The password hash is computed by the caller. This function does not see the password.
- *
- * @param orm - Open Drizzle handle.
- * @param input - Token, password hash, and the clock reading.
- * @returns The new user id, or why the link was not accepted.
- */
 export function acceptStaffInvite(
   orm: Orm,
   input: {
@@ -314,40 +286,26 @@ export function acceptStaffInvite(
   return { _tag: "accepted", userId };
 }
 
-/** One person in a university staff table. Invited staff appear before they accept. */
 export interface StaffDirectoryEntry {
-  /** Display name of the account or the invite. */
   readonly name: string;
-  /** Email of the account or the invite. */
+
   readonly email: string;
-  /** University role granted or held. */
+
   readonly role: StaffRole;
-  /** Department name, only known for an invite. */
+
   readonly department: string | null;
-  /** Active means the person has a membership; pending means an unexpired invite. */
+
   readonly status: "active" | "pending";
-  /** True when the account is banned. Pending invites are never banned. */
+
   readonly banned: boolean;
 }
 
-/** One department of a university, for the invite form. */
 export interface UniversityDepartment {
-  /** Department id, the value the invite form submits. */
   readonly id: string;
-  /** Department name, shown to the administrator. */
+
   readonly name: string;
 }
 
-/**
- * List the staff of one university: members first, then pending invites.
- * Students are not staff, so they are left out. A member has no department column.
- * The department shown for an active row is the latest accepted invite for that email.
- *
- * @param orm - Open Drizzle handle.
- * @param universityId - The university whose staff are listed.
- * @param now - The clock reading for invite expiry.
- * @returns Active staff, then pending invites, each group sorted by name.
- */
 export function listStaffDirectory(
   orm: Orm,
   universityId: string,
@@ -442,13 +400,6 @@ export function listStaffDirectory(
   return entries;
 }
 
-/**
- * List the departments a university administrator may target with an invite.
- *
- * @param orm - Open Drizzle handle.
- * @param universityId - The university whose departments are listed.
- * @returns Departments of that university only, sorted by name.
- */
 export function listUniversityDepartments(orm: Orm, universityId: string): readonly UniversityDepartment[] {
   return orm
     .select({ id: schema.departments.id, name: schema.departments.name })
@@ -459,13 +410,6 @@ export function listUniversityDepartments(orm: Orm, universityId: string): reado
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
-/**
- * Preview a staff file for one university. Nothing is written.
- *
- * @param orm - Open Drizzle handle.
- * @param input - The file text, the session university, and the clock.
- * @returns The per-row preview, or why the file was refused.
- */
 export function previewStaffImport(
   orm: Orm,
   input: { readonly csv: string; readonly universityId: string; readonly now: Date },
@@ -486,20 +430,10 @@ export function previewStaffImport(
   return previewStaffCsv(input.csv, departmentNames(orm, input.universityId), takenEmails(orm, input.now));
 }
 
-/** A preview row plus the raw token when commit wrote it. The token is not stored. */
 export interface ImportedStaffRow extends StaffCsvRow {
-  /** Raw token for a row that was written. Null when the row was skipped. */
   readonly token: string | null;
 }
 
-/**
- * Validate the file again and write one invite per row that can be invited.
- * One audit row records the batch. A row that became a duplicate since the preview is skipped.
- *
- * @param orm - Open Drizzle handle.
- * @param input - The same file the preview showed, the actor, and a token mint.
- * @returns The rows, with a token only where an invite was written.
- */
 export function commitStaffImport(
   orm: Orm,
   input: {

@@ -6,10 +6,6 @@ import { OfflineRetry } from "./offline-retry";
 
 export const dynamic = "force-static";
 
-/**
- * Shown when a document cannot be loaded.
- * The shell is on the device. A checkout is not.
- */
 export default function OfflinePage() {
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-8">

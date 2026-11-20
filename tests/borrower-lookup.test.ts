@@ -84,7 +84,6 @@ function insertProfile(
     .run();
 }
 
-/** One linked Daystar student with an admission number and no photo. */
 function plantStudent(database: Database): void {
   insertAccount(database, {
     id: "user_harris",

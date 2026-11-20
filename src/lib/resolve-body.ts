@@ -1,7 +1,4 @@
-/**
- * JSON from `GET /api/universities/resolve`.
- * It names the institution. It does not say whether an account exists.
- */
+
 export type ResolveBody =
   | {
       readonly supported: false;

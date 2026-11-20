@@ -5,30 +5,22 @@ import { forbidden, redirect } from "next/navigation";
 import * as schema from "@/db/schema";
 import { auth, orm } from "@/lib/auth-server";
 
-/** A signed-in member of one active university, already checked against the allowed roles. */
 export interface UniversityAccess {
-  /** Account id. */
   readonly userId: string;
-  /** Account name. */
+
   readonly userName: string;
-  /** Login email. */
+
   readonly email: string;
-  /** Platform role from the account. */
+
   readonly platformRole: string;
-  /** Active organization, which is the university id. */
+
   readonly organizationId: string;
-  /** University role loaded from membership. */
+
   readonly role: string;
-  /** University display name. */
+
   readonly universityName: string;
 }
 
-/**
- * Require a session whose university role is one of `allowed`.
- * Hiding a nav row is not this check. The page calls it again.
- *
- * @param allowed - University roles that may open the page.
- */
 export async function requireUniversityRole(allowed: readonly string[]): Promise<UniversityAccess> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session === null) {

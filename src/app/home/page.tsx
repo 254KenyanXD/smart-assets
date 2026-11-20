@@ -13,7 +13,6 @@ import { auth, orm } from "@/lib/auth-server";
 import { SignOutButton } from "./sign-out-button";
 import { StudentHome, type StudentHomeData } from "./student-home";
 
-/** Signed-in landing. The active organization is the university for this visit. */
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session === null) {

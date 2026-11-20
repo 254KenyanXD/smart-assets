@@ -6,10 +6,6 @@ import { reportFound } from "@/app/desk/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-/**
- * Found-tag report on the student home.
- * The reply is the asset title and location. It does not name the borrower.
- */
 export function FoundTag() {
   const [message, setMessage] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);

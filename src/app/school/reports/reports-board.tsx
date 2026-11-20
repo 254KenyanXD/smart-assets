@@ -4,26 +4,21 @@ import { SchoolRail, type SchoolNavLabel } from "@/components/school-rail";
 import { reportLabel, type ReportKind } from "@/domain/reports";
 import type { ReportTable } from "@/lib/report-store";
 
-/**
- * Department reports from the Soft Bento frame.
- * The table is the query. Export CSV and Export PDF download that same query.
- */
 export function ReportsBoard(props: {
-  /** University name in the rail and the breadcrumb. */
   readonly universityName: string;
-  /** Signed-in person. */
+
   readonly userName: string;
-  /** Two-letter mark. */
+
   readonly userInitials: string;
-  /** Words for the signed-in role. */
+
   readonly userRoleLabel: string;
-  /** School administrators also have the staff desk. Department heads do not. */
+
   readonly canInvite: boolean;
-  /** Reports this role is allowed to open. */
+
   readonly kinds: readonly ReportKind[];
-  /** The report on screen. */
+
   readonly selected: ReportKind;
-  /** Rows for `selected`. Empty until the university has some. */
+
   readonly table: ReportTable;
 }) {
   const hrefs: Partial<Record<SchoolNavLabel, string>> = props.canInvite

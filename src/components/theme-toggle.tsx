@@ -4,10 +4,6 @@ import { useEffect, useState } from "react";
 
 import { applyTheme, readThemeChoice, resolveTheme, THEME_KEY, type ResolvedTheme } from "@/lib/theme";
 
-/**
- * Icon control for the theme. No stored choice follows the computer, including later changes.
- * A click stores light or dark in localStorage and that choice wins until it is changed.
- */
 export function ThemeToggle() {
   const [mode, setMode] = useState<ResolvedTheme>("light");
 
@@ -43,7 +39,6 @@ export function ThemeToggle() {
         try {
           localStorage.setItem(THEME_KEY, next);
         } catch {
-          // A private window can refuse storage. The choice still applies for this visit.
         }
         applyTheme(next);
         setMode(next);
@@ -54,7 +49,6 @@ export function ThemeToggle() {
   );
 }
 
-/** Quiet corner control for pages that have no profile row. */
 export function ThemeCorner() {
   return (
     <div className="fixed top-3 right-3 z-20">

@@ -1,9 +1,5 @@
 import { Schema } from "effect";
 
-/**
- * What an identity adapter returns after a portal check.
- * The portal password is not part of this value.
- */
 export const VerifiedIdentity = Schema.Struct({
   officialId: Schema.String,
   fullName: Schema.String,
@@ -16,7 +12,4 @@ export const VerifiedIdentity = Schema.Struct({
   source: Schema.Literal("daystar-portal"),
 });
 
-/**
- * A verified student identity.
- */
 export interface VerifiedIdentity extends Schema.Schema.Type<typeof VerifiedIdentity> {}
