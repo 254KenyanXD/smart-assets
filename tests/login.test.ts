@@ -10,10 +10,11 @@ import * as schema from "@/db/schema";
 import { seed } from "@/db/seed";
 import { deriveDaystarAdmission, suggestDaystarPortal } from "@/domain/daystar-admission";
 import { createAuth, hashLocalPassword } from "@/lib/auth";
-import { InvalidCredentials } from "@/lib/identity/errors";
+import { InvalidCredentials, PortalUnavailable } from "@/lib/identity/errors";
 import { layer as directoryLayer, Service as Directory } from "@/lib/identity/directory";
 import { Service as PortalTransport } from "@/lib/identity/portal-transport";
 import { createWindowLimiter } from "@/lib/resolve-limit";
+import { percentile } from "@/lib/scan/timing";
 import { makeRuntime } from "@/lib/runtime";
 import { NotAllowed, Service as University } from "@/services/university";
 
@@ -53,6 +54,24 @@ function fakePortal(calls: { login: number }) {
           return { cookieHeader: "ASP.NET_SessionId=test" };
         }),
       dashboard: () => Effect.succeed(dashboardHtml),
+    }),
+  );
+}
+
+function blockedPortal(calls: { login: number; dashboard: number }) {
+  return Layer.succeed(
+    PortalTransport,
+    PortalTransport.of({
+      login: () =>
+        Effect.gen(function* () {
+          calls.login += 1;
+          return yield* Effect.fail(new PortalUnavailable({ message: "The portal is blocked." }));
+        }),
+      dashboard: () =>
+        Effect.gen(function* () {
+          calls.dashboard += 1;
+          return yield* Effect.fail(new PortalUnavailable({ message: "The portal is blocked." }));
+        }),
     }),
   );
 }
@@ -445,6 +464,54 @@ describe("login", () => {
       expect(admin.success.map((profile) => profile.fullName)).toEqual(["Strathmore Student"]);
     }
     await runtime.dispose();
+    database.close();
+  });
+
+  test("times a returning sign-in while the portal refuses every call", async () => {
+    const database = memoryDatabase();
+    const linking = { login: 0 };
+    const logs: string[] = [];
+    const linkedAuth = testAuth(database, linking, logs);
+    const linked = await post(linkedAuth.auth, "/api/auth/link-university", {
+      email: "sample231670@daystar.ac.ke",
+      portalUsername: "23-1670",
+      portalPassword,
+      localPassword,
+      consent: true,
+    });
+    expect(linked.status).toBe(200);
+    expect(linking.login).toBe(1);
+
+    const blocked = { login: 0, dashboard: 0 };
+    const { auth } = createAuth({
+      database,
+      secret: "test-secret-not-a-portal-password-32",
+      baseURL: origin,
+      trustedOrigins: [origin],
+      portal: blockedPortal(blocked),
+      rateLimit: false,
+    });
+    const samples: number[] = [];
+    for (let index = 0; index < 31; index += 1) {
+      const started = performance.now();
+      const signedIn = await post(auth, "/api/auth/sign-in/email", {
+        email: "sample231670@daystar.ac.ke",
+        password: localPassword,
+      });
+      samples.push(performance.now() - started);
+      expect(signedIn.status).toBe(200);
+    }
+    expect(blocked.login).toBe(0);
+    expect(blocked.dashboard).toBe(0);
+    const p50 = percentile(samples, 0.5);
+    const p95 = percentile(samples, 0.95);
+    const p99 = percentile(samples, 0.99);
+    expect(p50).not.toBeNull();
+    expect(p95).not.toBeNull();
+    expect(p99).not.toBeNull();
+    console.log(
+      `returning-sign-in count=${samples.length} p50=${p50} p95=${p95} p99=${p99} portalLogin=${blocked.login} portalDashboard=${blocked.dashboard}`,
+    );
     database.close();
   });
 });
