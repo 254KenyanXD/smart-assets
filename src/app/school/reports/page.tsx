@@ -6,11 +6,6 @@ import { loadReport, type ReportTable } from "@/lib/report-store";
 import { requireUniversityRole } from "../guard";
 import { ReportsBoard } from "./reports-board";
 
-/**
- * Department reports for the signed-in university.
- * A school administrator sees inventory and depreciation.
- * A department head sees all four. Rows are the whole university.
- */
 export default async function ReportsPage({
   searchParams,
 }: {

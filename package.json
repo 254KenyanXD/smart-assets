@@ -6,7 +6,7 @@
     "dev": "bun --bun next dev",
     "build": "bun --bun next build && bun ./node_modules/@serwist/cli/cli.js build",
     "start": "bun --bun next start",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check && bun check -p tsconfig.sw.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun src/db/migrate.ts",
     "db:seed": "bun src/db/seed.ts",

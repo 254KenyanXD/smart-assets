@@ -8,17 +8,12 @@ import { borrowerBadgeSvg } from "@/lib/scan/badge";
 import { decodeImage } from "@/lib/scan/decode";
 import { acceptHit, type PriorHit } from "@/lib/scan/types";
 
-/**
- * The decoder ships as a WASM module. In the browser the worker loads it from
- * `public/scanner/`; here it is read from the package, before the first call.
- */
 const wasm = readFileSync(
   fileURLToPath(new URL("../node_modules/zxing-wasm/dist/reader/zxing_reader.wasm", import.meta.url)),
 );
 const wasmBinary = wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wasm.byteLength) as ArrayBuffer;
 prepareZXingModule({ overrides: { wasmBinary } });
 
-/** One sample image from the zxing-cpp set, with the text that sample states. */
 interface Fixture {
   readonly file: string;
   readonly format: string;
@@ -35,7 +30,6 @@ function loadManifest(): readonly Fixture[] {
   return JSON.parse(raw) as readonly Fixture[];
 }
 
-/** A PNG decoder reads a container, so every fixture is a PNG. */
 function mimeOf(file: string): string {
   return file.endsWith(".png") ? "image/png" : "application/octet-stream";
 }
@@ -70,7 +64,6 @@ function pngChunk(type: string, data: Uint8Array): Uint8Array {
   return out;
 }
 
-/** Writes RGBA pixels as a PNG, so a rendered badge can go back through `decodeImage`. */
 function encodePng(width: number, height: number, rgba: Uint8Array): Uint8Array {
   const stride = width * 4;
   const raw = new Uint8Array((stride + 1) * height);
@@ -103,7 +96,6 @@ function encodePng(width: number, height: number, rgba: Uint8Array): Uint8Array 
   return file;
 }
 
-/** One dark run in the badge SVG, in module units. */
 interface SvgRect {
   readonly x: number;
   readonly y: number;
@@ -127,11 +119,6 @@ function parseBadge(svg: string): { readonly span: number; readonly rects: reado
   return { span, rects };
 }
 
-/**
- * Draws the badge the way a browser would, one module at `scale` pixels, and
- * returns the pixels as a PNG. This is the only rasteriser in the test: the
- * module rectangles come from the SVG itself, not from the encoder.
- */
 function rasterise(svg: string, scale: number): Uint8Array {
   const { span, rects } = parseBadge(svg);
   const side = span * scale;

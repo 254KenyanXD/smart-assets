@@ -10,42 +10,24 @@ const DirectoryRow = Schema.Struct({
   country: Schema.String,
 });
 
-/**
- * One institution from the vendored Hipo directory.
- */
 export interface DirectoryEntry {
-  /** Institution name as published in the directory. */
   readonly name: string;
-  /** Country name as published in the directory. */
+
   readonly country: string;
-  /** Lowercased email domains for this institution. */
+
   readonly domains: readonly string[];
 }
 
-/**
- * In-memory domain index. Built once. Exact domain match only.
- */
 export interface Interface {
-  /** Every institution in the vendored file. */
   readonly institutions: () => Effect.Effect<number>;
-  /** Unique domains in the vendored file. */
+
   readonly domains: () => Effect.Effect<number>;
-  /**
-   * Institutions that publish this exact domain.
-   *
-   * @param domain - Lowercased domain, without an `@`.
-   */
+
   readonly lookup: (domain: string) => Effect.Effect<readonly DirectoryEntry[]>;
 }
 
-/**
- * Vendored Hipo university directory.
- */
 export class Service extends Context.Service<Service, Interface>()("@app/UniversityDirectory") {}
 
-/**
- * Read the vendored directory and index it by domain.
- */
 export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {

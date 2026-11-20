@@ -13,112 +13,88 @@ import { parseLocationKind, type LocationKind } from "@/domain/location";
 type Orm = BunSQLiteDatabase<typeof schema>;
 type Tx = Parameters<Parameters<Orm["transaction"]>[0]>[0];
 
-/** Who is asking. The university role is loaded from membership, not from this object. */
 export interface Actor {
-  /** Account id. */
   readonly userId: string;
-  /** `super_admin` or `user` from the account row. */
+
   readonly platformRole: string;
-  /** University the change is about. A super admin names it. Everyone else must belong to it. */
+
   readonly universityId: string;
 }
 
-/** A location row just after it is created. */
 export interface CreatedLocation {
-  /** Location id. */
   readonly id: string;
-  /** Name as stored, trimmed. */
+
   readonly name: string;
-  /** Kind as stored. */
+
   readonly kind: LocationKind;
 }
 
-/** An asset row just after it is registered. It always starts procured. */
 export interface RegisteredAsset {
-  /** Asset id. */
   readonly id: string;
-  /** Tag as stored, trimmed. */
+
   readonly tag: string;
-  /** The only state a new asset is allowed to start in. */
+
   readonly state: "procured";
 }
 
-/** An asset after a move that was allowed. */
 export interface AssetSnapshot {
-  /** Asset id. */
   readonly id: string;
-  /** Tag as stored. */
+
   readonly tag: string;
-  /** State after the committed move. */
+
   readonly state: AssetState;
 }
 
-/** A checkout that committed the loan and the audit together. */
 export interface CheckoutReceipt {
-  /** Asset that left the shelf. */
   readonly assetId: string;
-  /** Custody row id. */
+
   readonly custodyId: string;
-  /** Tag as stored. */
+
   readonly tag: string;
-  /** State after checkout. */
+
   readonly state: "in_custody";
 }
 
-/**
- * What a finder is allowed to see.
- * Borrower email, phone, and portal identity are not on this object.
- */
 export interface FoundReceipt {
-  /** Tag that was reported. */
   readonly assetTag: string;
-  /** Title of that asset. */
+
   readonly assetTitle: string;
-  /** Location name, or null when the asset has none. */
+
   readonly locationName: string | null;
 }
 
-/** The caller is not allowed to make this change. No rejected-move audit is written. */
 export class NotAllowed extends Schema.TaggedError<NotAllowed>()("NotAllowed", {
   message: Schema.String,
 }) {}
 
-/** The tag or id is not an asset of this university. */
 export class UnknownAsset extends Schema.TaggedError<UnknownAsset>()("UnknownAsset", {
   message: Schema.String,
 }) {}
 
-/** This university already stored that tag. */
 export class DuplicateTag extends Schema.TaggedError<DuplicateTag>()("DuplicateTag", {
   message: Schema.String,
 }) {}
 
-/** The move is not on the written list. The rejected audit is already committed. */
 export class IllegalMove extends Schema.TaggedError<IllegalMove>()("IllegalMove", {
   message: Schema.String,
 }) {}
 
-/** Checkout was asked for someone who is not a student member of this university. */
 export class NotAStudent extends Schema.TaggedError<NotAStudent>()("NotAStudent", {
   message: Schema.String,
 }) {}
 
-/** Check-in found no open loan. The asset state was left as it was. */
 export class NoOpenLoan extends Schema.TaggedError<NoOpenLoan>()("NoOpenLoan", {
   message: Schema.String,
 }) {}
 
-/** The university is suspended, so the write was refused. */
 export class SuspendedUniversity extends Schema.TaggedError<SuspendedUniversity>()("SuspendedUniversity", {
   message: Schema.String,
 }) {}
 
-/** Cost, salvage, or useful life cannot be used in the written formula. */
 export class BadMoney extends Schema.TaggedError<BadMoney>()("BadMoney", {
   message: Schema.String,
 }) {}
 
-/** A title, tag, date, location, or condition was not usable. */
 export class InvalidAsset extends Schema.TaggedError<InvalidAsset>()("InvalidAsset", {
   message: Schema.String,
 }) {}
@@ -139,17 +115,7 @@ type ActorRole = "super_admin" | "school_admin" | "dept_head" | "attendant" | "s
 const recordRoles: readonly ActorRole[] = ["super_admin", "school_admin"];
 const foundRoles: readonly ActorRole[] = ["super_admin", "school_admin", "dept_head", "attendant", "student"];
 
-/**
- * Register, move, lend, and return assets.
- * A rejected move and a successful move each commit their audit.
- * A checkout that fails while writing the audit rolls the loan back with it.
- */
 export interface Interface {
-  /**
-   * Register one asset as procured.
-   *
-   * @param input - Actor, tag, title, money, and purchase date.
-   */
   readonly register: (input: {
     readonly actor: Actor;
     readonly tag: string;
@@ -160,12 +126,7 @@ export interface Interface {
     readonly purchasedOn: Date;
     readonly locationId?: string | null;
   }) => Effect.Effect<RegisteredAsset, NotAllowed | SuspendedUniversity | DuplicateTag | BadMoney | InvalidAsset>;
-  /**
-   * Correct the recorded details of one asset.
-   * State and the last check-in condition stay as they are.
-   *
-   * @param input - Actor, asset id, and the details a school administrator can edit.
-   */
+
   readonly update: (input: {
     readonly actor: Actor;
     readonly assetId: string;
@@ -180,34 +141,20 @@ export interface Interface {
     AssetSnapshot,
     NotAllowed | SuspendedUniversity | UnknownAsset | DuplicateTag | BadMoney | InvalidAsset
   >;
-  /**
-   * Add a lab, a desk, or a library counter in the actor's university.
-   * The department is optional. When it is set, it has to belong to that university.
-   *
-   * @param input - Actor, name, kind, and an optional department id.
-   */
+
   readonly createLocation: (input: {
     readonly actor: Actor;
     readonly name: string;
     readonly kind: string;
     readonly departmentId: string | null;
   }) => Effect.Effect<CreatedLocation, NotAllowed | SuspendedUniversity | InvalidAsset>;
-  /**
-   * Move an asset along the written list, except checkout and the desk return.
-   * Those two stay on checkout and check-in so a loan cannot skip the borrower or the condition.
-   *
-   * @param input - Actor, asset id, and the state being asked for.
-   */
+
   readonly recordMove: (input: {
     readonly actor: Actor;
     readonly assetId: string;
     readonly to: AssetState;
   }) => Effect.Effect<AssetSnapshot, NotAllowed | SuspendedUniversity | UnknownAsset | IllegalMove>;
-  /**
-   * Check an available asset out to a student.
-   *
-   * @param input - Actor, tag, borrower, and an optional due instant.
-   */
+
   readonly checkout: (input: {
     readonly actor: Actor;
     readonly tag: string;
@@ -217,11 +164,7 @@ export interface Interface {
     CheckoutReceipt,
     NotAllowed | SuspendedUniversity | UnknownAsset | IllegalMove | NotAStudent | InvalidAsset
   >;
-  /**
-   * Check an asset back in and record the condition grade.
-   *
-   * @param input - Actor, asset id, and a condition grade.
-   */
+
   readonly checkIn: (input: {
     readonly actor: Actor;
     readonly assetId: string;
@@ -230,11 +173,7 @@ export interface Interface {
     AssetSnapshot,
     NotAllowed | SuspendedUniversity | UnknownAsset | IllegalMove | NoOpenLoan | InvalidAsset
   >;
-  /**
-   * Record that someone found an asset. The receipt has no borrower contact.
-   *
-   * @param input - Actor, tag, and an optional note stored on the report row only.
-   */
+
   readonly reportFound: (input: {
     readonly actor: Actor;
     readonly tag: string;
@@ -242,17 +181,8 @@ export interface Interface {
   }) => Effect.Effect<FoundReceipt, NotAllowed | SuspendedUniversity | UnknownAsset | InvalidAsset>;
 }
 
-/**
- * Custody state changes for one university.
- */
 export class Service extends Context.Service<Service, Interface>()("@app/Custody") {}
 
-/**
- * Build the custody service over one SQLite database.
- * The layer has no other services, so login can keep its own runtime.
- *
- * @param database - Open bun:sqlite database. The caller owns its lifetime.
- */
 export function layer(database: Database): Layer.Layer<Service> {
   const orm = drizzle(database, { schema });
 

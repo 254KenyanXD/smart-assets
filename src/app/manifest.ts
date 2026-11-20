@@ -1,9 +1,5 @@
 import type { MetadataRoute } from "next";
 
-/**
- * Install metadata. The icons are rasters of the Custody mark Harris picked.
- * The colours are the bright ground, because a cold visit is bright.
- */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "University Smart-Assets",

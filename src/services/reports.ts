@@ -11,45 +11,38 @@ import { loadReport } from "@/lib/report-store";
 
 type Orm = BunSQLiteDatabase<typeof schema>;
 
-/** Who is asking. The university role is loaded from membership, not from this object. */
 export interface Actor {
-  /** Account id. */
   readonly userId: string;
-  /** `super_admin` or `user` from the account row. */
+
   readonly platformRole: string;
-  /** University the report is about. */
+
   readonly universityId: string;
 }
 
-/** CSV and PDF produced from one table. */
 export interface ReportFile {
-  /** Parsed kind. */
   readonly kind: ReportKind;
-  /** Letterhead title. */
+
   readonly title: string;
-  /** Download name without an extension. */
+
   readonly filename: string;
-  /** UTF-8 CSV with a byte order mark. Data rows match `rowCount`. */
+
   readonly csv: string;
-  /** Letterhead PDF of the same rows. */
+
   readonly pdf: Uint8Array;
-  /** Data rows in the query. The header is not included. */
+
   readonly rowCount: number;
-  /** Pages in `pdf`. */
+
   readonly pageCount: number;
 }
 
-/** The caller is not allowed to download this report. */
 export class NotAllowed extends Schema.TaggedError<NotAllowed>()("NotAllowed", {
   message: Schema.String,
 }) {}
 
-/** The university is suspended, so the report was refused. */
 export class SuspendedUniversity extends Schema.TaggedError<SuspendedUniversity>()("SuspendedUniversity", {
   message: Schema.String,
 }) {}
 
-/** The report name is not one of the four. */
 export class UnknownReport extends Schema.TaggedError<UnknownReport>()("UnknownReport", {
   message: Schema.String,
 }) {}
@@ -58,15 +51,7 @@ type GateError = NotAllowed | SuspendedUniversity;
 type BuildError = NotAllowed | SuspendedUniversity | UnknownReport;
 type Outcome<A, E> = { readonly _tag: "ok"; readonly value: A } | { readonly _tag: "err"; readonly error: E };
 
-/**
- * Build a report as a CSV and a letterhead PDF from one query.
- */
 export interface Interface {
-  /**
-   * Authorize the actor, load one university's rows, and render both files.
-   *
-   * @param input - Actor, report name, and the clock reading for age and the UTC day.
-   */
   readonly build: (input: {
     readonly actor: Actor;
     readonly kind: string;
@@ -74,16 +59,8 @@ export interface Interface {
   }) => Effect.Effect<ReportFile, NotAllowed | SuspendedUniversity | UnknownReport>;
 }
 
-/**
- * Report generation for one university.
- */
 export class Service extends Context.Service<Service, Interface>()("@app/Reports") {}
 
-/**
- * Build the reports service over one SQLite database.
- *
- * @param database - Open bun:sqlite database. The caller owns its lifetime.
- */
 export function layer(database: Database): Layer.Layer<Service> {
   const orm = drizzle(database, { schema });
 
@@ -183,10 +160,6 @@ async function renderPrepared(prepared: PreparedReport): Promise<ReportFile> {
   };
 }
 
-/**
- * CSV for one report. A borrower's custody file names the scope on the first line,
- * the same words the PDF letterhead uses.
- */
 function csvFor(prepared: PreparedReport): string {
   const table = csvDocument(prepared.header, prepared.rows);
   if (prepared.department !== "Your own loans") {

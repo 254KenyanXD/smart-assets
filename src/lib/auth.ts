@@ -129,11 +129,6 @@ const superAdminRole = adminAccess.newRole({
 const organizationAc = organizationAccess as AccessControl;
 const adminAc = adminAccess as AccessControl;
 
-/**
- * Hash a local password with the same function better-auth uses to verify it.
- *
- * @param password - The local password. The caller does not store this string.
- */
 export function hashLocalPassword(password: string): Promise<string> {
   return hashPassword(password);
 }
@@ -146,23 +141,19 @@ function httpError(
   return APIError.from(status, { code, message });
 }
 
-/**
- * Inputs for one auth instance. Tests pass a memory database and a fake portal.
- */
 export interface CreateAuthOptions {
-  /** Open SQLite database. */
   readonly database: Database;
-  /** better-auth signing secret. */
+
   readonly secret: string;
-  /** Public origin of this app, without a trailing path. */
+
   readonly baseURL: string;
-  /** Origins allowed to call the auth endpoints. */
+
   readonly trustedOrigins: readonly string[];
-  /** Portal transport. Defaults to the live Daystar client. */
+
   readonly portal?: Layer.Layer<PortalTransport>;
-  /** Receives auth log lines so tests can prove a password was not logged. */
+
   readonly captureLog?: (line: string) => void;
-  /** Turn off better-auth's rate limit in tests. */
+
   readonly rateLimit?: boolean;
 }
 
@@ -193,12 +184,6 @@ function authError(cause: unknown): APIError | null {
   return null;
 }
 
-/**
- * Build better-auth for one database.
- * Public signup stays off. The link endpoint is the only way a student account appears.
- *
- * @param options - Database, secret, origin, and the portal transport.
- */
 export function createAuth(options: CreateAuthOptions) {
   const orm = drizzle(options.database, { schema });
   const runtime = makeRuntime(options.database, options.portal ?? livePortal);
@@ -658,10 +643,7 @@ export function createAuth(options: CreateAuthOptions) {
               if (found.account.banned) {
                 throw httpError("UNPROCESSABLE_ENTITY", "DEACTIVATE_NOT_DONE", deactivateFailureMessage("already"));
               }
-              // The admin plugin's ban route is global. A school administrator must not
-              // receive that permission, or they could ban any account. These are the two
-              // adapter calls that route makes after its own check: set the ban, then
-              // delete every session for that account.
+              // Not the admin ban route: that permission is global, so a school administrator could ban any account.
               await ctx.context.internalAdapter.updateUser(found.account.userId, {
                 banned: true,
                 banReason: reason,
@@ -821,14 +803,6 @@ export function createAuth(options: CreateAuthOptions) {
   return { auth, orm, runtime, database: options.database };
 }
 
-/**
- * The university a staff file may write into.
- * A school administrator's body cannot choose another university.
- *
- * @param ctx - The auth request. The body may name a university.
- * @param orm - Open Drizzle handle.
- * @param rateLimit - When false, tests skip the window limiter.
- */
 async function importTarget(
   ctx: GenericEndpointContext,
   orm: BunSQLiteDatabase<typeof schema>,
@@ -866,9 +840,6 @@ async function importTarget(
   return { userId: session.user.id, universityId: organizationId };
 }
 
-/**
- * The auth object returned by {@link createAuth}.
- */
 export type AppAuth = ReturnType<typeof createAuth>;
 
 function readUniversityId(body: unknown): string | null {

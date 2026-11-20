@@ -7,10 +7,6 @@ import { readPasswordReset } from "@/lib/password-reset-store";
 
 import { AcceptResetForm } from "./accept-form";
 
-/**
- * Set a new password from one reset link.
- * An expired, revoked, used, or unknown token shows the same sentence.
- */
 export default async function ResetPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const reset = readPasswordReset(orm, token, new Date());

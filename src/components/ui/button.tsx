@@ -1,13 +1,9 @@
 import type { ButtonHTMLAttributes } from "react";
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  /** Primary is the filled action. Quiet is the second action on the same card. */
   readonly variant?: "primary" | "quiet";
 };
 
-/**
- * Soft Bento action. Owned here so the default shadcn theme does not replace the palette.
- */
 export function Button({ variant = "primary", className = "", type = "button", ...props }: Props) {
   const look =
     variant === "primary"

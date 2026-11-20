@@ -9,11 +9,6 @@ import { databasePath, openDatabase } from "@/db/client";
 
 const migrationsFolder = join(dirname(fileURLToPath(import.meta.url)), "../../drizzle");
 
-/**
- * Apply the generated SQL migrations to one database.
- *
- * @param database - Open SQLite database.
- */
 export function applyMigrations(database: Database): void {
   migrate(drizzle(database), { migrationsFolder });
 }

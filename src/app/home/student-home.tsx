@@ -4,47 +4,38 @@ import { borrowerBadgeSvg } from "@/lib/scan/badge";
 import { FoundTag } from "./found-tag";
 import { SignOutButton } from "./sign-out-button";
 
-/** One real loan still out in this student's name. */
 export interface StudentLoanView {
-  /** Asset title. */
   readonly assetTitle: string;
-  /** Asset tag. */
+
   readonly assetTag: string;
-  /** Due date, or a sentence when the desk set none. */
+
   readonly dueLabel: string;
 }
 
-/** What the signed-in student home is allowed to show. Counts come from this student's custody rows. */
 export interface StudentHomeData {
-  /** Name from the portal profile, or the account name. */
   readonly name: string;
-  /** Two-letter mark used when the profile has no photo. */
+
   readonly initials: string;
-  /** Portal photo already stored on the profile. Blank values count as missing. */
+
   readonly photoUrl: string | null;
-  /** Admission number and programme, when the profile has them. */
+
   readonly meta: string;
-  /** University on this session. */
+
   readonly universityName: string;
-  /** Admission number printed on the badge. */
+
   readonly officialId: string | null;
-  /** Open loans. Empty when nothing is out. */
+
   readonly loans: readonly StudentLoanView[];
-  /** Open loans. */
+
   readonly onLoan: number;
-  /** Checkouts started in the current UTC calendar year. */
+
   readonly loansThisTerm: number;
-  /** Closed loans with no due date, or checked in on or before the due instant. */
+
   readonly returnedOnTime: number;
-  /** Open loans whose due instant is already past. */
+
   readonly overdue: number;
 }
 
-/**
- * Student home from the Soft Bento screen: borrower badge, real open loans, and the desk note.
- * An empty loan list keeps the empty sentence. Rows are not invented.
- * The badge is the admission number as a QR symbol; without one, the painted bars stay.
- */
 export function StudentHome({ data }: { readonly data: StudentHomeData }) {
   const university = data.universityName.toUpperCase();
   const badge = badgeSvg(data.officialId);
@@ -187,27 +178,11 @@ function Stat({ value, label }: { readonly value: string; readonly label: string
   );
 }
 
-/**
- * The portrait to show. A blank stored value keeps the initials.
- *
- * @param photoUrl - Value from `student_profiles.photo_url`.
- * @returns The image source, or null when there is nothing to show.
- */
 function portraitSrc(photoUrl: string | null): string | null {
   const value = photoUrl?.trim() ?? "";
   return value.length > 0 ? value : null;
 }
 
-/**
- * The badge symbol for one admission number.
- *
- * The payload is the number as the university issues it. A profile without an
- * admission number keeps the painted bars, and a number the encoder refuses
- * falls back to them instead of failing the page.
- *
- * @param officialId - Admission number from the profile, or null.
- * @returns A standalone SVG document, or null when there is nothing to draw.
- */
 function badgeSvg(officialId: string | null): string | null {
   if (officialId === null) {
     return null;

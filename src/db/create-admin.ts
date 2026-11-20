@@ -8,26 +8,14 @@ import * as schema from "@/db/schema";
 import { seed } from "@/db/seed";
 import { hashLocalPassword } from "@/lib/auth";
 
-/**
- * Fields for the first super admin. The password is hashed and not written to a file.
- */
 export interface FirstAdmin {
-  /** Sign-in email. */
   readonly email: string;
-  /** Display name. */
+
   readonly name: string;
-  /** Local password. It is hashed before insert. */
+
   readonly password: string;
 }
 
-/**
- * Create the first super admin.
- * The admin plugin cannot create this account: it requires an admin session that does not exist yet.
- * A second call refuses.
- *
- * @param database - Open SQLite database.
- * @param input - Name, email, and password.
- */
 export async function createFirstSuperAdmin(database: Database, input: FirstAdmin): Promise<void> {
   const orm = drizzle(database, { schema });
   const existing = orm

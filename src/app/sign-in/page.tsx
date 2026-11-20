@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 
 import { SignInForm } from "./sign-in-form";
 
-/** Email-first sign-in. The university is detected before a password is asked for. */
 export default function SignInPage() {
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-8 sm:px-8 lg:px-12 xl:px-16">

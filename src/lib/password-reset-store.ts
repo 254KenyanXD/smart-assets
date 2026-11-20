@@ -15,29 +15,18 @@ import { labelStaffRole, parseStaffRole } from "@/domain/staff-invite";
 
 type Orm = BunSQLiteDatabase<typeof schema>;
 
-/** Why a mint did not produce a link. */
 export type MintResetFailure = ResetDenial | "unknown" | "no-password" | "suspended" | "unknown-university";
 
-/** What the reset page may show. The token is not in this value. */
 export interface OpenReset {
-  /** Account name. */
   readonly fullName: string;
-  /** Account email. */
+
   readonly email: string;
-  /** Membership words, when the role is a staff role. Students say Student. */
+
   readonly roleLabel: string;
-  /** University name. */
+
   readonly universityName: string;
 }
 
-/**
- * Mint one reset link for an account that already has a local password.
- * An older unused link for that account is revoked in the same transaction.
- *
- * @param orm - Open Drizzle handle.
- * @param input - Actor, email, university, raw token, and the clock.
- * @returns The raw token, or the reason the mint was refused.
- */
 export function mintPasswordReset(
   orm: Orm,
   input: {
@@ -131,15 +120,6 @@ export function mintPasswordReset(
   return { _tag: "minted", token: input.token };
 }
 
-/**
- * Read a reset link for the page.
- * A closed link returns null, the same as an unknown token.
- *
- * @param orm - Open Drizzle handle.
- * @param token - The raw token from the path.
- * @param now - The clock reading.
- * @returns The account words, or null.
- */
 export function readPasswordReset(orm: Orm, token: string, now: Date): OpenReset | null {
   const row = openRow(orm, token, now);
   if (row === null) return null;
@@ -152,15 +132,6 @@ export function readPasswordReset(orm: Orm, token: string, now: Date): OpenReset
   };
 }
 
-/**
- * Replace the local password and close the link.
- * Older sessions for that account are deleted in the same transaction.
- * The password itself is never written to the audit row.
- *
- * @param orm - Open Drizzle handle.
- * @param input - Raw token, already-hashed password, and the clock.
- * @returns The user id, or invalid when the link cannot be used.
- */
 export function acceptPasswordReset(
   orm: Orm,
   input: { readonly token: string; readonly passwordHash: string; readonly now: Date },

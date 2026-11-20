@@ -5,17 +5,12 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-/** A university the super admin can attach to an invite. */
 export interface InviteChoice {
-  /** University id. */
   readonly id: string;
-  /** Display name. */
+
   readonly name: string;
 }
 
-/**
- * Issue one staff invite. The raw link stays on this page and is not stored.
- */
 export function InviteForm({ universities }: { readonly universities: readonly InviteChoice[] }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");

@@ -177,7 +177,6 @@ async function signIn(auth: ReturnType<typeof createAuth>["auth"], email: string
   return cookieHeader(response);
 }
 
-/** A super admin and a Daystar school administrator, each with a live session. */
 async function daystarDesk() {
   const database = memoryDatabase();
   const logs: string[] = [];

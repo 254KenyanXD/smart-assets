@@ -74,7 +74,6 @@ function actor(userId: string, universityId: string): Actor {
   return { userId, platformRole: "user", universityId };
 }
 
-/** The smallest set of people this queue needs: a school administrator, an attendant, a student, a finder, and a second tenant. */
 function plantPeople(database: Database): void {
   insertUser(database, { id: "user_admin", email: "admin.found@daystar.ac.ke", name: "Found Administrator" });
   insertUser(database, { id: "user_attendant", email: attendantEmail, name: "Found Attendant" });

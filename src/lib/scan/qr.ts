@@ -1,29 +1,18 @@
-/**
- * A small QR encoder for the borrower badge.
- *
- * It writes byte mode at error correction level L, for versions 1 to 6, and
- * picks the mask with the lowest penalty. A payload that does not fit in
- * version 6 is refused rather than truncated.
- */
 
-/** The largest version this encoder writes, so no version information block is needed. */
 const MAX_VERSION = 6;
 
-/** One row of the error correction tables for level L. */
 interface VersionTable {
-  /** Data codewords across every block. */
   readonly dataCodewords: number;
-  /** Error correction codewords per block. */
+
   readonly ecCodewordsPerBlock: number;
-  /** Data codewords in each block, in order. */
+
   readonly blocks: readonly number[];
-  /** Bits left over after the last codeword. */
+
   readonly remainderBits: number;
-  /** Row and column centres of the alignment patterns. */
+
   readonly alignment: readonly number[];
 }
 
-/** Level L parameters, indexed by version. */
 const TABLES: Readonly<Record<number, VersionTable>> = {
   1: { dataCodewords: 19, ecCodewordsPerBlock: 7, blocks: [19], remainderBits: 0, alignment: [] },
   2: { dataCodewords: 34, ecCodewordsPerBlock: 10, blocks: [34], remainderBits: 7, alignment: [6, 18] },
@@ -33,21 +22,12 @@ const TABLES: Readonly<Record<number, VersionTable>> = {
   6: { dataCodewords: 136, ecCodewordsPerBlock: 18, blocks: [68, 68], remainderBits: 7, alignment: [6, 34] },
 };
 
-/** A finished QR symbol, read one module at a time. */
 export interface QrCode {
-  /** Modules along one side, without the quiet zone. */
   readonly size: number;
-  /**
-   * Whether the module at this position is dark.
-   *
-   * @param x - Column, counting from the left.
-   * @param y - Row, counting from the top.
-   * @returns True when the module is dark.
-   */
+
   isDark(x: number, y: number): boolean;
 }
 
-/** Powers of two and their exponents over GF(256), primitive polynomial 0x11d. */
 const EXP = new Uint8Array(512);
 const LOG = new Uint8Array(256);
 
@@ -83,7 +63,6 @@ function polyMul(a: Uint8Array, b: Uint8Array): Uint8Array {
   return product;
 }
 
-/** The Reed-Solomon generator polynomial of the given degree. */
 function generatorPoly(degree: number): Uint8Array {
   let poly: Uint8Array = Uint8Array.from([1]);
   for (let i = 0; i < degree; i += 1) {
@@ -92,7 +71,6 @@ function generatorPoly(degree: number): Uint8Array {
   return poly;
 }
 
-/** The remainder of `data` divided by the generator, which is the block's error correction. */
 function rsRemainder(data: Uint8Array, degree: number): Uint8Array {
   const generator = generatorPoly(degree);
   const remainder = new Uint8Array(degree);
@@ -114,7 +92,6 @@ function tableFor(version: number): VersionTable {
   return table;
 }
 
-/** The smallest version that holds the payload, or an error when none does. */
 function pickVersion(byteLength: number): number {
   for (let version = 1; version <= MAX_VERSION; version += 1) {
     const table = tableFor(version);
@@ -123,7 +100,6 @@ function pickVersion(byteLength: number): number {
   throw new Error("The badge payload is too long for a QR code.");
 }
 
-/** Builds the data and error correction codewords, interleaved in the order the symbol expects. */
 function buildCodewords(bytes: Uint8Array, table: VersionTable): Uint8Array {
   const bits: number[] = [];
   const pushBits = (value: number, length: number): void => {
@@ -217,7 +193,6 @@ function drawAlignment(modules: Uint8Array, functions: Uint8Array, size: number,
   }
 }
 
-/** Paints every pattern that is not data, and marks the format areas as reserved. */
 function drawFunctionPatterns(
   modules: Uint8Array,
   functions: Uint8Array,
@@ -263,7 +238,6 @@ function drawFunctionPatterns(
   markFunction(functions, size, 8, size - 8);
 }
 
-/** Writes the 15 format bits, both copies, and the always dark module. */
 function drawFormatBits(modules: Uint8Array, size: number, mask: number): void {
   const levelL = 1;
   const data = (levelL << 3) | mask;
@@ -286,7 +260,6 @@ function drawFormatBits(modules: Uint8Array, size: number, mask: number): void {
   setModule(modules, size, 8, size - 8, true);
 }
 
-/** Lays the codewords into the zigzag path, skipping every function module. */
 function placeCodewords(modules: Uint8Array, functions: Uint8Array, size: number, codewords: Uint8Array): void {
   const totalBits = codewords.length * 8;
   let index = 0;
@@ -424,13 +397,6 @@ function penaltyOf(modules: Uint8Array, size: number): number {
   );
 }
 
-/**
- * Encodes text as a QR symbol.
- *
- * @param text - Payload, written as UTF-8 bytes.
- * @returns The finished symbol, mask and format bits included.
- * @throws When the payload does not fit in version 6 at level L.
- */
 export function encodeQr(text: string): QrCode {
   if (text.length === 0) throw new Error("A QR payload cannot be empty.");
   const bytes = new TextEncoder().encode(text);

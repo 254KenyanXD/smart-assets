@@ -9,7 +9,7 @@ import { applyMigrations } from "@/db/migrate";
 import * as schema from "@/db/schema";
 import { seed } from "@/db/seed";
 import { straightLine, completedYears } from "@/domain/depreciation";
-import { listAssets, listLocations, listOpenCustody, listStudentCustody } from "@/lib/asset-store";
+import { findBorrower, listAssets, listLocations, listOpenCustody, listStudentCustody } from "@/lib/asset-store";
 import { layer as custodyLayer, Service as Custody, type Actor } from "@/services/custody";
 
 const daystar = "uni_daystar";
@@ -123,7 +123,10 @@ function plantPeople(database: Database): void {
 
 const purchasedOn = new Date("2024-01-15T00:00:00.000Z");
 
-function register(database: Database, input: { readonly universityId?: string; readonly userId?: string; readonly tag?: string }) {
+function register(
+  database: Database,
+  input: { readonly universityId?: string; readonly userId?: string; readonly tag?: string; readonly title?: string },
+) {
   const universityId = input.universityId ?? daystar;
   const userId = input.userId ?? "user_admin";
   return run(
@@ -133,7 +136,7 @@ function register(database: Database, input: { readonly universityId?: string; r
       return yield* custody.register({
         actor: actor(userId, universityId, userId === "user_platform" ? "super_admin" : "user"),
         tag: input.tag ?? "TAG-1001",
-        title: "Lab cable",
+        title: input.title ?? "Lab cable",
         cost: 100000,
         salvage: 10000,
         usefulLifeYears: 5,
@@ -806,5 +809,126 @@ describe("custody", () => {
       }
     }
     expect(ormOf(database).select().from(schema.assets).where(eq(schema.assets.id, asset.id)).get()?.tag).toBe("TAG-EDITED");
+  });
+
+  test("one university cannot read the other university's assets", async () => {
+    const database = memoryDatabase();
+    plantPeople(database);
+    insertUser(database, {
+      id: "user_strath_attendant",
+      email: "attendant.read@strathmore.edu",
+      name: "Strathmore Attendant",
+    });
+    insertUser(database, {
+      id: "user_strath_student",
+      email: "student.read@strathmore.edu",
+      name: "Strathmore Student",
+    });
+    insertMember(database, "mem_strath_attendant", strathmore, "user_strath_attendant", "attendant");
+    insertMember(database, "mem_strath_student", strathmore, "user_strath_student", "student");
+
+    const daystarAsset = await register(database, { tag: "TAG-SHARED", title: "Daystar cable" });
+    await register(database, {
+      universityId: strathmore,
+      userId: "user_strath",
+      tag: "TAG-SHARED",
+      title: "Strathmore cable",
+    });
+    await register(database, {
+      universityId: strathmore,
+      userId: "user_strath",
+      tag: "TAG-STRATH-ONLY",
+      title: "Strathmore spare",
+    });
+
+    const now = new Date("2026-01-15T00:00:00.000Z");
+    const daystarRows = listAssets(ormOf(database), daystar, now);
+    const strathRows = listAssets(ormOf(database), strathmore, now);
+    expect(daystarRows.map((row) => row.title)).toEqual(["Daystar cable"]);
+    expect(strathRows.map((row) => row.title)).toEqual(["Strathmore cable", "Strathmore spare"]);
+    expect(daystarRows.map((row) => row.tag)).toEqual(["TAG-SHARED"]);
+    expect(listLocations(ormOf(database), daystar).map((row) => row.name)).toContain("Review counter");
+    expect(listLocations(ormOf(database), strathmore).map((row) => row.name)).not.toContain("Review counter");
+    expect(findBorrower(ormOf(database), daystar, "23-0101")?.userId).toBe("user_student");
+    expect(findBorrower(ormOf(database), strathmore, "23-0101")).toBeNull();
+
+    const foreign = await run(
+      database,
+      Effect.result(
+        Effect.gen(function* () {
+          const custody = yield* Custody;
+          return yield* custody.checkout({
+            actor: actor("user_attendant", daystar),
+            tag: "TAG-STRATH-ONLY",
+            borrowerUserId: "user_student",
+            dueAt: null,
+          });
+        }),
+      ),
+    );
+    expect(foreign._tag).toBe("Failure");
+    if (foreign._tag === "Failure") {
+      expect(foreign.failure._tag).toBe("UnknownAsset");
+    }
+
+    await run(
+      database,
+      Effect.gen(function* () {
+        const custody = yield* Custody;
+        return yield* custody.recordMove({
+          actor: actor("user_admin", daystar),
+          assetId: daystarAsset.id,
+          to: "available",
+        });
+      }),
+    );
+    await run(
+      database,
+      Effect.gen(function* () {
+        const custody = yield* Custody;
+        return yield* custody.checkout({
+          actor: actor("user_attendant", daystar),
+          tag: "TAG-SHARED",
+          borrowerUserId: "user_student",
+          dueAt: null,
+        });
+      }),
+    );
+
+    const daystarLoans = listOpenCustody(ormOf(database), daystar);
+    const strathLoans = listOpenCustody(ormOf(database), strathmore);
+    expect(daystarLoans.map((row) => row.assetTag)).toEqual(["TAG-SHARED"]);
+    expect(daystarLoans.map((row) => row.assetTitle)).toEqual(["Daystar cable"]);
+    expect(strathLoans).toEqual([]);
+    expect(listStudentCustody(ormOf(database), daystar, "user_student", now).open.map((row) => row.assetTag)).toEqual([
+      "TAG-SHARED",
+    ]);
+    expect(listStudentCustody(ormOf(database), strathmore, "user_student", now).open).toEqual([]);
+    expect(listAssets(ormOf(database), daystar, now).map((row) => row.state)).toEqual(["in_custody"]);
+    expect(listAssets(ormOf(database), strathmore, now).find((row) => row.tag === "TAG-SHARED")?.state).toBe("procured");
+
+    const sameTag = await run(
+      database,
+      Effect.result(
+        Effect.gen(function* () {
+          const custody = yield* Custody;
+          return yield* custody.checkout({
+            actor: actor("user_strath_attendant", strathmore),
+            tag: "TAG-SHARED",
+            borrowerUserId: "user_strath_student",
+            dueAt: null,
+          });
+        }),
+      ),
+    );
+    expect(sameTag._tag).toBe("Failure");
+    if (sameTag._tag === "Failure") {
+      expect(sameTag.failure._tag).toBe("IllegalMove");
+      expect(sameTag.failure.message).toBe(
+        "This asset is Procured. A school administrator has to mark it available before checkout.",
+      );
+    }
+    expect(listOpenCustody(ormOf(database), strathmore)).toEqual([]);
+    expect(listOpenCustody(ormOf(database), daystar).map((row) => row.assetTitle)).toEqual(["Daystar cable"]);
   });
 });

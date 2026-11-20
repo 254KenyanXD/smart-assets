@@ -13,13 +13,6 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-/**
- * Installable shell.
- *
- * Precache holds the built files and `/offline`.
- * Documents, session calls, and report downloads are network-only.
- * `defaultCache` is not used: it would keep HTML and RSC payloads on the device.
- */
 const shell = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,

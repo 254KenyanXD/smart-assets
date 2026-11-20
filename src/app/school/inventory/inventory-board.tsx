@@ -10,82 +10,70 @@ import { displayLocationKind, labelLocationKind, locationKinds } from "@/domain/
 
 import { createLocation, recordMove, registerAsset, updateAsset } from "./actions";
 
-/** One inventory row, already labelled for the table. */
 export interface InventoryRow {
-  /** Asset id. */
   readonly id: string;
-  /** Title. */
+
   readonly title: string;
-  /** Tag. */
+
   readonly tag: string;
-  /** Parsed state, used to choose the record buttons. */
+
   readonly state: AssetState | null;
-  /** Status column. */
+
   readonly stateLabel: string;
-  /** Condition column. Empty when no grade has been recorded. */
+
   readonly conditionLabel: string;
-  /** Location column. Empty when the asset has none. */
+
   readonly locationName: string;
-  /** Location id for the edit form, or an empty string when the asset has none. */
+
   readonly locationId: string;
-  /** Book value, or an empty string when the stored money cannot be used. */
+
   readonly bookValue: string;
-  /** Cost for the edit form. */
+
   readonly cost: string;
-  /** Salvage for the edit form. */
+
   readonly salvage: string;
-  /** Useful life for the edit form. */
+
   readonly usefulLifeYears: string;
-  /** Purchase date, `YYYY-MM-DD`, for the edit form. */
+
   readonly purchasedOn: string;
-  /** UTC date of the last asset change. */
+
   readonly movedOn: string;
 }
 
-/** One location the register form can attach to an asset. */
 export interface InventoryLocationChoice {
-  /** Location id submitted with the asset. */
   readonly id: string;
-  /** Location name. */
+
   readonly name: string;
-  /** Stored kind. Shown with its label when it is one of the three. */
+
   readonly kind: string;
-  /** Department name, or null when the location is for the whole university. */
+
   readonly departmentName: string | null;
 }
 
-/** One department the location form can attach. */
 export interface InventoryDepartmentChoice {
-  /** Department id. */
   readonly id: string;
-  /** Department name. */
+
   readonly name: string;
 }
 
-/** Everything the inventory page reads from the server. */
 export interface InventoryBoardProps {
-  /** University name in the rail and the breadcrumb. */
   readonly universityName: string;
-  /** Signed-in person. */
+
   readonly userName: string;
-  /** Two-letter mark. */
+
   readonly userInitials: string;
-  /** Words for the signed-in role. */
+
   readonly userRoleLabel: string;
-  /** School admins can register, add a location, and record moves. Department heads only read. */
+
   readonly canWrite: boolean;
-  /** Assets of this university. Empty until someone registers one. */
+
   readonly rows: readonly InventoryRow[];
-  /** Locations of this university. Empty until a school administrator adds one. */
+
   readonly locations: readonly InventoryLocationChoice[];
-  /** Departments of this university. Empty when none are recorded. Writers only. */
+
   readonly departments: readonly InventoryDepartmentChoice[];
 }
 
-/**
- * Inventory from the Soft Bento frame: the real assets, their state, and book value.
- * Search filters this table only.
- */
 export function InventoryBoard(props: InventoryBoardProps) {
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<string | null>(null);

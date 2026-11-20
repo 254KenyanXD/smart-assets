@@ -34,8 +34,4 @@ function boot(): AppAuth {
   });
 }
 
-/**
- * Process-wide auth instance.
- * Hot reload reuses it so the SQLite connection and the directory layer stay one.
- */
 export const { auth, orm, runtime, database } = (store.smartAssetsAuth ??= boot());

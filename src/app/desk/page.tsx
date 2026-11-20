@@ -22,10 +22,6 @@ const months = [
   "December",
 ] as const;
 
-/**
- * Attendant desk. Checkout and check-in are recorded here.
- * A school administrator does not land on this page.
- */
 export default async function DeskPage() {
   const access = await requireUniversityRole(["attendant"]);
   const now = new Date();

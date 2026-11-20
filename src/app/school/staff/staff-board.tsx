@@ -9,52 +9,42 @@ import { Input } from "@/components/ui/input";
 
 import { CsvImport } from "./csv-import";
 
-/** One department the invite form can attach to a staff account. */
 export interface StaffDepartmentChoice {
-  /** Department id from the university. */
   readonly id: string;
-  /** Department name shown in the select. */
+
   readonly name: string;
 }
 
-/** One row of the staff table, with the role label already resolved on the server. */
 export interface StaffDisplayRow {
-  /** Staff member name, or the name on a pending invite. */
   readonly name: string;
-  /** University email. */
+
   readonly email: string;
-  /** Words for the university role, from the domain label helper. */
+
   readonly roleLabel: string;
-  /** Department name, or null when the account has none. */
+
   readonly department: string | null;
-  /** Active account, a banned account, or an invite that has not been accepted. */
+
   readonly status: "active" | "pending" | "deactivated";
-  /** True when this school administrator may deactivate the row. */
+
   readonly canDeactivate: boolean;
 }
 
-/** Everything the staff desk reads from the server. */
 export interface StaffBoardProps {
-  /** University on this session. Every read and every invite is scoped to it. */
   readonly universityId: string;
-  /** University name, used in the rail, the breadcrumb and the subtitle. */
+
   readonly universityName: string;
-  /** Name of the signed-in school admin. */
+
   readonly userName: string;
-  /** Two-letter mark for that account. */
+
   readonly userInitials: string;
-  /** Words for the signed-in user's role. */
+
   readonly userRoleLabel: string;
-  /** Departments of this university, for the invite form. */
+
   readonly departments: readonly StaffDepartmentChoice[];
-  /** Staff accounts and pending invites in this university. */
+
   readonly rows: readonly StaffDisplayRow[];
 }
 
-/**
- * School admin staff desk: rail, top bar, invite card and the staff table.
- * Search filters only what this page holds, which is the staff directory.
- */
 export function StaffBoard(props: StaffBoardProps) {
   const [query, setQuery] = useState("");
   const [deactivateEmail, setDeactivateEmail] = useState<string | null>(null);
@@ -236,10 +226,6 @@ export function StaffBoard(props: StaffBoardProps) {
   );
 }
 
-/**
- * Ask for a reason, then deactivate one staff account in this university.
- * The reason is required. No email is sent.
- */
 function DeactivateForm({
   email,
   name,
@@ -307,10 +293,6 @@ function DeactivateForm({
   );
 }
 
-/**
- * Mint one password reset for an account in the signed-in university.
- * The raw link is shown once. No email is sent.
- */
 function PasswordResetPanel() {
   const [email, setEmail] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -375,10 +357,6 @@ function PasswordResetPanel() {
   );
 }
 
-/**
- * Issue one staff invite for the signed-in university.
- * The raw link is shown once and is never stored in component state beyond this visit.
- */
 function InvitePanel({
   universityId,
   departments,
@@ -512,13 +490,6 @@ function InvitePanel({
   );
 }
 
-/**
- * Pull the server sentence out of an error body.
- *
- * @param body - Parsed response body, if any.
- * @returns The message the API sent, or a neutral sentence.
- */
-/** The three university roles, in the words from the Soft Bento staff frame. */
 function RoleReference() {
   const roles = [
     ["school_admin", "Runs this university: staff, inventory, reports and the audit log."],

@@ -1,19 +1,15 @@
 import { SchoolRail } from "@/components/school-rail";
 import type { AuditEntry } from "@/lib/audit-store";
 
-/**
- * Audit trail for one university. Rows come from the audit log. None are invented.
- */
 export function AuditBoard(props: {
-  /** University name in the rail and the breadcrumb. */
   readonly universityName: string;
-  /** Signed-in person. */
+
   readonly userName: string;
-  /** Two-letter mark. */
+
   readonly userInitials: string;
-  /** Words for the signed-in role. */
+
   readonly userRoleLabel: string;
-  /** Newest first. Empty until something in this university is audited. */
+
   readonly rows: readonly AuditEntry[];
 }) {
   return (

@@ -8,101 +8,84 @@ import { completedYears, straightLine } from "@/domain/depreciation";
 
 type Orm = BunSQLiteDatabase<typeof schema>;
 
-/** One location a school administrator can attach to an asset. */
 export interface ListedLocation {
-  /** Location id. */
   readonly id: string;
-  /** Name as stored. */
+
   readonly name: string;
-  /** Kind as stored. Older rows may use a word new creates no longer accept. */
+
   readonly kind: string;
-  /** Department name, or null when the location is for the whole university. */
+
   readonly departmentName: string | null;
 }
 
-/** One inventory row. Book value is the written formula at `now`, not a stored column. */
 export interface ListedAsset {
-  /** Asset id. */
   readonly id: string;
-  /** Title recorded at registration. */
+
   readonly title: string;
-  /** Tag unique inside the university. */
+
   readonly tag: string;
-  /** Parsed state, or null when the stored text is not one of the five. */
+
   readonly state: AssetState | null;
-  /** Words for the state. */
+
   readonly stateLabel: string;
-  /** Words for the last check-in grade, or an empty string when none has been recorded. */
+
   readonly conditionLabel: string;
-  /** Location name, or an empty string when the asset has none. */
+
   readonly locationName: string;
-  /** Book value in integer currency units, or null when the stored money cannot be used. */
+
   readonly bookValue: number | null;
-  /** Cost in integer currency units. */
+
   readonly cost: number;
-  /** Salvage in integer currency units. */
+
   readonly salvage: number;
-  /** Useful life in whole years. */
+
   readonly usefulLifeYears: number;
-  /** Purchase date as stored. */
+
   readonly purchasedOn: Date;
-  /** Location id, or null when the asset has none. */
+
   readonly locationId: string | null;
-  /** Last time the asset row changed. */
+
   readonly updatedAt: Date;
 }
 
-/** An open loan the attendant desk is allowed to show, including the borrower. */
 export interface OpenLoan {
-  /** Custody row id. */
   readonly custodyId: string;
-  /** Asset id, used by the check-in action. */
+
   readonly assetId: string;
-  /** Asset title. */
+
   readonly assetTitle: string;
-  /** Asset tag. */
+
   readonly assetTag: string;
-  /** Borrower account name. */
+
   readonly borrowerName: string;
-  /** Official id from the student profile, or null when the profile has none. */
+
   readonly officialId: string | null;
-  /** When the loan started. */
+
   readonly checkedOutAt: Date;
-  /** Due instant, or null when the desk did not set one. */
+
   readonly dueAt: Date | null;
 }
 
-/** One open loan on the student home. No attendant notes and no other student's rows. */
 export interface StudentLoanRow {
-  /** Asset title. */
   readonly assetTitle: string;
-  /** Asset tag. */
+
   readonly assetTag: string;
-  /** Due instant, or null when the desk did not set one. */
+
   readonly dueAt: Date | null;
 }
 
-/** Counts from this student's own custody rows. */
 export interface StudentCustodyView {
-  /** Loans that are still out. */
   readonly open: readonly StudentLoanRow[];
-  /** How many of those are still out. */
+
   readonly onLoan: number;
-  /** Checkouts whose start falls in the current UTC calendar year. */
+
   readonly loansThisTerm: number;
-  /** Closed loans with no due date, or checked in on or before the due instant. */
+
   readonly returnedOnTime: number;
-  /** Open loans whose due instant is already past. */
+
   readonly overdue: number;
 }
 
-/**
- * Inventory for one university, with book value computed at `now`.
- *
- * @param orm - Drizzle handle for the app database.
- * @param universityId - University whose assets to list.
- * @param now - Clock reading for the age in years.
- */
 export function listAssets(orm: Orm, universityId: string, now: Date): readonly ListedAsset[] {
   const rows = orm
     .select({
@@ -153,13 +136,6 @@ export function listAssets(orm: Orm, universityId: string, now: Date): readonly 
   });
 }
 
-/**
- * Locations for one university, ordered by name.
- * A missing department stays null. It does not drop the location.
- *
- * @param orm - Drizzle handle for the app database.
- * @param universityId - University whose locations to list.
- */
 export function listLocations(orm: Orm, universityId: string): readonly ListedLocation[] {
   return orm
     .select({
@@ -175,12 +151,6 @@ export function listLocations(orm: Orm, universityId: string): readonly ListedLo
     .all();
 }
 
-/**
- * Open loans for one university. The borrower name and official id are included for the attendant.
- *
- * @param orm - Drizzle handle for the app database.
- * @param universityId - University whose open loans to list.
- */
 export function listOpenCustody(orm: Orm, universityId: string): readonly OpenLoan[] {
   const rows = orm
     .select({
@@ -212,15 +182,6 @@ export function listOpenCustody(orm: Orm, universityId: string): readonly OpenLo
   }));
 }
 
-/**
- * This student's loans and the three home counts.
- * "This term" is the current UTC calendar year. There is no term table.
- *
- * @param orm - Drizzle handle for the app database.
- * @param universityId - University on the session.
- * @param userId - The signed-in student.
- * @param now - Clock reading for overdue and the calendar year.
- */
 export function listStudentCustody(orm: Orm, universityId: string, userId: string, now: Date): StudentCustodyView {
   const rows = orm
     .select({
@@ -261,30 +222,16 @@ export function listStudentCustody(orm: Orm, universityId: string, userId: strin
   };
 }
 
-/** A borrower the desk can name before the checkout is confirmed. */
 export interface BorrowerLookup {
-  /** Account id posted with the checkout. */
   readonly userId: string;
-  /** Profile name, or the account name when the profile has none. */
+
   readonly name: string;
-  /** Admission number, or null when the profile has none. */
+
   readonly officialId: string | null;
-  /** Portal photo, or null when the profile has none or the column is blank. */
+
   readonly photoUrl: string | null;
 }
 
-/**
- * A student of this university, looked up by email or by admission number.
- *
- * An `@` selects the email match, the same rule as `findUniversityStudent`.
- * Anything else is an exact match on the stored admission number, which is
- * never lowercased: `23-1943` is a university-issued identifier, not a slug.
- *
- * @param orm - Drizzle handle for the app database.
- * @param universityId - University the checkout is for.
- * @param key - Email or admission number typed at the desk, or read from a badge.
- * @returns The borrower without contact details, or null when nobody matches.
- */
 export function findBorrower(orm: Orm, universityId: string, key: string): BorrowerLookup | null {
   const typed = key.trim();
   if (typed.length === 0) {
@@ -317,14 +264,6 @@ export function findBorrower(orm: Orm, universityId: string, key: string): Borro
   };
 }
 
-/**
- * A student member of this university, looked up by login email.
- *
- * @param orm - Drizzle handle for the app database.
- * @param universityId - University the checkout is for.
- * @param email - Email typed at the desk.
- * @returns The student, or null when this university has no student with that email.
- */
 export function findUniversityStudent(
   orm: Orm,
   universityId: string,

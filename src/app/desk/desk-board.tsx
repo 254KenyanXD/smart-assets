@@ -13,61 +13,50 @@ import { checkInAsset, checkoutAsset, previewBorrower, reportFound, type Borrowe
 import { FoundQueue } from "./found-queue";
 import { ScanPanel } from "./scan-panel";
 
-/** One asset the attendant can look up before checkout. */
 export interface DeskAsset {
-  /** Title. */
   readonly title: string;
-  /** Tag. */
+
   readonly tag: string;
-  /** Status words, including Procured and Available. */
+
   readonly stateLabel: string;
-  /** Location name, or "No location". */
+
   readonly locationName: string;
-  /** Last check-in grade, or "None yet". */
+
   readonly conditionLabel: string;
 }
 
-/** One open loan the attendant can check back in. */
 export interface DeskLoan {
-  /** Asset id posted with the check-in. */
   readonly assetId: string;
-  /** Asset title. */
+
   readonly assetTitle: string;
-  /** Asset tag. */
+
   readonly assetTag: string;
-  /** Admission number when the profile has one, otherwise the account name. */
+
   readonly studentLabel: string;
-  /** Account name, shown under the admission number when both exist. */
+
   readonly borrowerName: string;
-  /** Checkout time, UTC. */
+
   readonly when: string;
 }
 
-/** Everything the attendant desk reads from the server. */
 export interface DeskBoardProps {
-  /** University name in the rail. */
   readonly universityName: string;
-  /** Signed-in attendant. */
+
   readonly userName: string;
-  /** Two-letter mark. */
+
   readonly userInitials: string;
-  /** Words for the attendant role. */
+
   readonly userRoleLabel: string;
-  /** Real date and name, in the desk subtitle. */
+
   readonly subtitle: string;
-  /** Every asset in this university. The attendant can read them and cannot edit them. */
+
   readonly assets: readonly DeskAsset[];
-  /** Open loans. Empty until a checkout exists. */
+
   readonly loans: readonly DeskLoan[];
-  /** Found-tag reports for this university. The borrower is not on these rows. */
+
   readonly found: readonly FoundReportRow[];
 }
 
-/**
- * Attendant desk: scan or type a tag, check it out, and grade it on the way back.
- * A scan fills a field; the attendant still confirms the checkout and still picks a grade.
- * A found-item result shows the title and the location only.
- */
 export function DeskBoard(props: DeskBoardProps) {
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -114,7 +103,6 @@ export function DeskBoard(props: DeskBoardProps) {
         });
   const foundEmpty = props.found.length === 0 ? "No found tags." : "No found tags match that search.";
 
-  /** Ask the server to name the borrower. Reads only, so a miss writes nothing. */
   async function showBorrower(key: string): Promise<void> {
     const typed = key.trim();
     if (typed.length === 0) {
@@ -124,11 +112,6 @@ export function DeskBoard(props: DeskBoardProps) {
     setPreview(await previewBorrower(typed));
   }
 
-  /**
-   * One accepted read. A student fills the borrower field, a known loan tag
-   * selects that row for the grade, and anything else is the checkout tag.
-   * No read submits a form.
-   */
   function handleHit(text: string): void {
     const route = routeScan(phase, text, props.loans);
     if (route.kind === "student") {
@@ -438,11 +421,6 @@ export function DeskBoard(props: DeskBoardProps) {
   );
 }
 
-/**
- * The borrower the desk is about to lend to. It shows a photo only when the
- * profile has one. A missing photo, or a missing admission number, does not
- * block the checkout.
- */
 function BorrowerCard({ preview }: { readonly preview: BorrowerPreview }) {
   if (preview.name === null) {
     return (
@@ -470,12 +448,6 @@ function BorrowerCard({ preview }: { readonly preview: BorrowerPreview }) {
   );
 }
 
-/**
- * Move the keyboard to the grade for one returned asset.
- * The select is named by its aria-label, so the tag the desk read is the one it opens.
- *
- * @param tag - Asset tag on the open loan.
- */
 function focusCondition(tag: string): void {
   const label = `Condition for ${tag}`.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const select = document.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`);

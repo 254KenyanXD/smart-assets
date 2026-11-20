@@ -3,11 +3,6 @@ import { labelStaffRole } from "@/domain/staff-invite";
 import { requireUniversityRole } from "../../school/guard";
 import { ScannerLab } from "./scanner-lab";
 
-/**
- * Scanner lab. One image, or the live camera, timed on the device in front of
- * the person holding it. It records nothing: no checkout, no check-in, no tag.
- * An attendant only, the same guard as the desk.
- */
 export default async function ScannerLabPage() {
   const access = await requireUniversityRole(["attendant"]);
   return (

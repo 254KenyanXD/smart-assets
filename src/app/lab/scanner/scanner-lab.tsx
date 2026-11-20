@@ -9,43 +9,30 @@ import { createScanLoop, type ScanLoop } from "@/lib/scan/loop";
 import { framePercentiles } from "@/lib/scan/timing";
 import type { ScanHit } from "@/lib/scan/types";
 
-/** Said when the browser will not open the camera. */
 const CAMERA_FAILED = "The camera did not start. Type the tag.";
 
-/** Said for an empty or undecodable file. */
 const NOT_READ = "That file did not read.";
 
-/** One image the person chose, and what came back. */
 interface FileRead {
-  /** File name, so two runs can be told apart. */
   readonly name: string;
-  /** Every usable read in the image. Empty when nothing was read. */
+
   readonly hits: readonly ScanHit[];
-  /** Decode time in milliseconds, or null when the bytes never reached the decoder. */
+
   readonly ms: number | null;
 }
 
-/** Everything the lab page reads from the server. */
 export interface ScannerLabProps {
-  /** University name in the rail. */
   readonly universityName: string;
-  /** Signed-in attendant. */
+
   readonly userName: string;
-  /** Two-letter mark. */
+
   readonly userInitials: string;
-  /** Words for the attendant role. */
+
   readonly userRoleLabel: string;
-  /** Real name under the heading. */
+
   readonly subtitle: string;
 }
 
-/**
- * Scanner lab: how long one decode takes, from a file or from the live camera.
- *
- * It runs the same loop as the desk, with the measuring argument set, so the
- * numbers describe the real scanner. A read here is not an event: nothing
- * vibrates, nothing beeps, and nothing is checked out or in.
- */
 export function ScannerLab(props: ScannerLabProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const loopRef = useRef<ScanLoop | null>(null);
@@ -58,7 +45,6 @@ export function ScannerLab(props: ScannerLabProps) {
   const [tick, setTick] = useState(0);
   const stats = useMemo(() => framePercentiles(samplesRef.current), [tick]);
 
-  /** Stops the loop, the worker and every camera track. Safe to call twice. */
   const stopCamera = useCallback(() => {
     const loop = loopRef.current;
     loopRef.current = null;
@@ -86,10 +72,6 @@ export function ScannerLab(props: ScannerLabProps) {
     };
   }, []);
 
-  /**
-   * Refresh the numbers twice a second instead of once a frame.
-   * The samples themselves land in a ref, so a frame costs no React render.
-   */
   useEffect(() => {
     if (!active) return;
     const timer = setInterval(() => {
@@ -148,7 +130,6 @@ export function ScannerLab(props: ScannerLabProps) {
     }
   }, [active, release]);
 
-  /** Decodes the chosen image once and times that decode alone. */
   async function readFile(event: ChangeEvent<HTMLInputElement>): Promise<void> {
     const input = event.currentTarget;
     const chosen = input.files?.[0];
@@ -266,7 +247,6 @@ export function ScannerLab(props: ScannerLabProps) {
   );
 }
 
-/** What the chosen image held, and how long the decode took. */
 function FileResult({ read }: { readonly read: FileRead }) {
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-line bg-alt px-3 py-2">
@@ -290,7 +270,6 @@ function FileResult({ read }: { readonly read: FileRead }) {
   );
 }
 
-/** One number the lab reports. */
 function Stat({ label, value }: { readonly label: string; readonly value: string }) {
   return (
     <div className="rounded-xl border border-line bg-alt px-3 py-2">

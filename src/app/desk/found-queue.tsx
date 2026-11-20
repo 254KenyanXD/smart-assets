@@ -1,18 +1,11 @@
 import type { FoundReportRow } from "@/lib/found-store";
 
-/** Everything the attendant found-tag queue reads from the server. */
 export interface FoundQueueProps {
-  /** Found reports for the signed-in university, newest first. */
   readonly rows: readonly FoundReportRow[];
-  /** Sentence when `rows` is empty. */
+
   readonly emptyLabel?: string;
 }
 
-/**
- * Found-tag queue for the attendant desk.
- * It shows the item, the tag, the location, the time and the note. It never says who filed
- * the report and never names the borrower.
- */
 export function FoundQueue({ rows, emptyLabel = "No found tags." }: FoundQueueProps) {
   return (
     <section className="rounded-[18px] border border-line bg-surface p-[18px]">
@@ -38,11 +31,6 @@ export function FoundQueue({ rows, emptyLabel = "No found tags." }: FoundQueuePr
   );
 }
 
-/**
- * Report time in UTC, always in the same shape so the list does not shift between renders.
- *
- * @param value - When the report was filed.
- */
 function stamp(value: Date): string {
   return `${value.getUTCFullYear()}-${pad(value.getUTCMonth() + 1)}-${pad(value.getUTCDate())} ${pad(
     value.getUTCHours(),

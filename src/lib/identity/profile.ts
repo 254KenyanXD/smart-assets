@@ -3,10 +3,6 @@ import { Effect, Schema } from "effect";
 
 import { PortalChanged } from "@/lib/identity/errors";
 
-/**
- * Profile fields the Daystar dashboard is known to expose.
- * National id and date of birth are ignored on purpose.
- */
 export const DashboardProfile = Schema.Struct({
   regno: Schema.optionalKey(Schema.String),
   name: Schema.optionalKey(Schema.String),
@@ -19,27 +15,12 @@ export const DashboardProfile = Schema.Struct({
   photoUrl: Schema.optionalKey(Schema.String),
 });
 
-/**
- * Parsed dashboard profile.
- */
 export interface DashboardProfile extends Schema.Schema.Type<typeof DashboardProfile> {}
 
-/**
- * Normalise a dashboard label into the key the adapter stores.
- *
- * @param label - The label text from the portal.
- * @returns Lowercase key with dots and spaces removed.
- */
 export function profileKey(label: string): string {
   return label.toLowerCase().replace(/[.\s]/g, "");
 }
 
-/**
- * Read the profile blocks from a Daystar dashboard document.
- *
- * @param html - The dashboard HTML.
- * @returns The recognised fields, or `PortalChanged` when regno or name is missing.
- */
 export function parseDashboard(html: string): Effect.Effect<DashboardProfile, PortalChanged> {
   const root = parse(html);
   const fields: Record<string, string> = {};

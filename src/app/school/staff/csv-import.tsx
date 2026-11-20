@@ -6,37 +6,30 @@ import { useState, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { CSV_MAX_BYTES, CSV_TOO_BIG_MESSAGE } from "@/domain/staff-csv";
 
-/** One row the validate call is allowed to show. */
 interface ImportRow {
-  /** File line, used as the row key. */
   readonly line: number;
-  /** Name from the file. */
+
   readonly fullName: string;
-  /** Email from the file. */
+
   readonly email: string;
-  /** Words for the role. */
+
   readonly roleLabel: string;
-  /** Invite or skip. */
+
   readonly result: "invite" | "skip";
-  /** Why a row was skipped. */
+
   readonly reason: string | null;
 }
 
-/** Validate response. Commit adds the results file. */
 interface ImportPreview {
-  /** Rows that will become invites. */
   readonly inviteCount: number;
-  /** Rows that will be left out. */
+
   readonly skipCount: number;
-  /** Per-row preview. */
+
   readonly rows: readonly ImportRow[];
-  /** Present after commit. The links are in this file and are not stored. */
+
   readonly resultsCsv?: string;
 }
 
-/**
- * Two-step staff import. Validate writes nothing. Commit uses the session university.
- */
 export function CsvImport() {
   const router = useRouter();
   const [fileName, setFileName] = useState<string | null>(null);

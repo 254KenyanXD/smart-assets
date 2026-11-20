@@ -7,10 +7,6 @@ import { Input } from "@/components/ui/input";
 import { RESET_INVALID_MESSAGE } from "@/domain/password-reset";
 import type { OpenReset } from "@/lib/password-reset-store";
 
-/**
- * Password form for one live reset link.
- * The token stays in the request body and is not written into the database.
- */
 export function AcceptResetForm({
   token,
   reset,

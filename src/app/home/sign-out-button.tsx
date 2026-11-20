@@ -2,11 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 
-/**
- * End the local session and return to the email field.
- * The sign-out route rejects a POST with no content type, so this sends JSON
- * and leaves the page only after the server has deleted the session.
- */
 export function SignOutButton() {
   return (
     <Button

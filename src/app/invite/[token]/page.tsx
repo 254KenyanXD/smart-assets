@@ -7,10 +7,6 @@ import { readStaffInvite } from "@/lib/staff-invite-store";
 
 import { AcceptInviteForm } from "./accept-form";
 
-/**
- * Accept one staff invite.
- * An expired, revoked, used, or unknown token shows the same sentence.
- */
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const invite = readStaffInvite(orm, token, new Date());
