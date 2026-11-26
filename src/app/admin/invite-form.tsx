@@ -48,7 +48,7 @@ export function InviteForm({ universities }: { readonly universities: readonly I
   return (
     <form className="flex flex-col gap-3" onSubmit={submit}>
       <h2 className="font-display text-xl font-semibold text-ink">Invite a school administrator</h2>
-      <p className="text-sm text-ink2">The link is shown once. They set their own password from it.</p>
+      <p className="text-sm text-ink2">Shown once.</p>
       <label className="text-sm text-ink2" htmlFor="invite-name">
         Full name
         <Input

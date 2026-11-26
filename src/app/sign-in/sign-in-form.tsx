@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { CustodyMark } from "@/components/custody-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ResolveBody } from "@/lib/resolve-body";
@@ -107,7 +106,7 @@ export function SignInForm() {
       return;
     }
     if (!fields.consent) {
-      setNotice("Confirm that the portal password is checked once and not stored.");
+      setNotice("Tick the box to continue.");
       return;
     }
     setBusy(true);
@@ -134,21 +133,11 @@ export function SignInForm() {
     window.location.assign("/home");
   }
 
-  const tenant = resolved !== null && isSupported(resolved) ? resolved.name : "University email";
-
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-3 lg:hidden">
-        <CustodyMark />
-        <div>
-          <p className="font-mono text-[11px] font-semibold tracking-[0.14em] text-ink3">UNIVERSITY SMART-ASSETS</p>
-          <p className="text-xs text-ink2">{tenant}</p>
-        </div>
-      </div>
-
       <div>
         <h1 className="font-display text-[32px] font-semibold tracking-tight text-ink">Sign in</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink2 lg:hidden">Sign in with your university email.</p>
+        {resolved !== null && isSupported(resolved) ? <p className="mt-1 text-sm text-ink3">{resolved.name}</p> : null}
       </div>
 
       {resolved === null ? (
@@ -177,7 +166,7 @@ export function SignInForm() {
 
       {resolved !== null && isMany(resolved) ? (
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-ink2">This domain matches more than one institution.</p>
+          <p className="text-sm text-ink2">More than one institution uses this domain.</p>
           {resolved.institutions.map((institution) =>
             institution.slug === null ? (
               <p key={institution.name} className="text-sm text-ink">
@@ -200,10 +189,10 @@ export function SignInForm() {
       {resolved !== null && isSupported(resolved) && resolved.status === "active" && mode === "local" ? (
         <form className="flex flex-col gap-3" onSubmit={localForm.handleSubmit((fields) => void signIn(fields))}>
           {resolved.adapter === "daystar-portal" && resolved.portal === "staff" ? (
-            <p className="text-sm text-ink2">Staff sign in with an invite, not a portal password.</p>
+            <p className="text-sm text-ink2">Staff sign in with an invite.</p>
           ) : null}
           {resolved.adapter === "local" ? (
-            <p className="text-sm text-ink2">New staff accounts are created from an invite.</p>
+            <p className="text-sm text-ink2">Staff accounts come from an invite.</p>
           ) : null}
           <label className="text-sm text-ink" htmlFor="local-password">
             Local password
@@ -228,7 +217,7 @@ export function SignInForm() {
                 setMode("link");
               }}
             >
-              {resolved.portal === "staff" ? "I'm a student" : "First time? Link your university account"}
+              {resolved.portal === "staff" ? "I'm a student" : "First time? Link your account"}
             </Button>
           ) : null}
         </form>
@@ -269,7 +258,7 @@ export function SignInForm() {
           />
           <label className="flex items-start gap-2 text-sm text-ink2" htmlFor="consent">
             <input id="consent" type="checkbox" className="mt-1" {...linkForm.register("consent")} />
-            Your portal password is checked once against the university portal and is not stored.
+            Checked once against the portal, never stored.
           </label>
           <Button type="submit" disabled={busy}>
             Link account

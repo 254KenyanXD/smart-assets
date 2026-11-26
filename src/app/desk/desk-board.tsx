@@ -178,7 +178,7 @@ export function DeskBoard(props: DeskBoardProps) {
             <div>
               <h2 className="font-display text-[15px] font-semibold text-ink">Day report</h2>
               <p className="mt-1 text-[12px] text-ink2">
-                Custody history for this UTC day, including loans that are still open.
+                UTC day, including open loans.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -200,7 +200,7 @@ export function DeskBoard(props: DeskBoardProps) {
           <section className="min-w-0 rounded-[18px] border border-line bg-surface p-[18px]">
             <h2 className="font-display text-[15px] font-semibold text-ink">Assets</h2>
             <p className="mt-1 text-[12px] text-ink2">
-              Checkout needs an Available asset. A school administrator marks a Procured asset available.
+              Only Available assets can go out.
             </p>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[680px] border-collapse text-left">

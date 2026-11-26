@@ -179,7 +179,7 @@ export default async function AdminPage() {
           <section className="min-w-0 rounded-[18px] border border-line bg-surface p-[18px]">
             <h2 className="font-display text-[15px] font-semibold text-ink">Accounts</h2>
             <p className="mt-1 text-[12px] text-ink2">
-              Email, name, and role. Use this when a sign-in email has been forgotten. Passwords are not listed.
+              Passwords are not listed.
             </p>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[640px] border-collapse text-left">

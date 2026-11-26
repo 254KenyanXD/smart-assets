@@ -307,7 +307,7 @@ function LocationForm(props: {
       </label>
       {props.departments.length === 0 ? (
         <p className="self-end text-[12px] text-ink2">
-          No department is recorded, so this location is for the whole university.
+          Whole university.
         </p>
       ) : (
         <label className="flex flex-col gap-1 text-[11px] text-ink3">
@@ -442,7 +442,7 @@ function EditForm(props: {
           ))}
         </select>
       </label>
-      <p className="text-[12px] text-ink2 md:col-span-3">This edit does not change the status or the condition.</p>
+      <p className="text-[12px] text-ink2 md:col-span-3">Status and condition stay unchanged.</p>
       <div className="md:col-span-3">
         <Button type="submit">Save asset</Button>
       </div>

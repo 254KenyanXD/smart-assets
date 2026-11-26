@@ -484,7 +484,7 @@ function InvitePanel({
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? "Sending" : "Send invite"}
         </Button>
-        <p className="text-[10px] leading-[15px] text-ink3">The link is shown once and expires after 72 hours.</p>
+        <p className="text-[10px] leading-[15px] text-ink3">Single use. Expires in 72 hours.</p>
       </form>
     </section>
   );
@@ -492,9 +492,9 @@ function InvitePanel({
 
 function RoleReference() {
   const roles = [
-    ["school_admin", "Runs this university: staff, inventory, reports and the audit log."],
-    ["dept_head", "Sees the assets and demand figures for one department."],
-    ["attendant", "Checks assets out and in, records condition and files lost reports at one desk."],
+    ["school_admin", "Staff, inventory, reports and the audit log."],
+    ["dept_head", "Assets and demand for one department."],
+    ["attendant", "Checkouts, returns and condition at one desk."],
   ] as const;
   return (
     <section className="mt-4 flex flex-col gap-3 rounded-[18px] bg-role p-[18px]">
