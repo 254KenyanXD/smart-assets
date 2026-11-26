@@ -176,7 +176,7 @@ export function CsvImport() {
         </label>
         <div className="flex w-full flex-col gap-2 lg:w-[300px]">
           <p className="text-[12px] font-medium text-ink">{counts}</p>
-          <p className="text-[10px] leading-[15px] text-ink3">University comes from your session, never from the file.</p>
+          <p className="text-[10px] leading-[15px] text-ink3">University comes from your session.</p>
           <div className="flex gap-2">
             <Button variant="quiet" className="h-[38px] w-[120px]" disabled={busy || csv === null} onClick={() => void validate()}>
               Validate

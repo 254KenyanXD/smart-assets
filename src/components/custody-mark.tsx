@@ -1,7 +1,7 @@
-
-export function CustodyMark() {
+export function CustodyMark(props: { readonly size?: number }) {
+  const size = props.size ?? 38;
   return (
-    <span className="inline-grid h-[38px] w-[38px] shrink-0" aria-hidden="true">
+    <span className="inline-grid shrink-0" style={{ height: size, width: size }} aria-hidden="true">
       <img
         src="/brand/custody-bright.svg"
         alt=""

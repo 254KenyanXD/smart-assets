@@ -127,7 +127,7 @@ export function StudentHome({ data }: { readonly data: StudentHomeData }) {
       <div className="flex flex-col gap-4 xl:grid xl:grid-cols-2 xl:gap-6">
       <section className="rounded-2xl border border-line bg-surface px-4 py-4">
         <h2 className="font-display text-lg font-semibold text-ink">Custody history</h2>
-        <p className="mt-1 text-xs leading-relaxed text-ink2">Your own loans, as a spreadsheet and as a PDF.</p>
+        <p className="mt-1 text-xs leading-relaxed text-ink2">CSV or PDF.</p>
         <div className="mt-3 flex gap-2">
           <a
             href="/reports/custody?format=csv"
