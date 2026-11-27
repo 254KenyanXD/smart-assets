@@ -9,6 +9,7 @@ import { decideMove, labelAssetState, parseAssetState, type AssetState } from "@
 import { parseCondition, type Condition } from "@/domain/condition";
 import { straightLine, type DepreciationRefusal } from "@/domain/depreciation";
 import { parseLocationKind, type LocationKind } from "@/domain/location";
+import { categoryFromInput } from "@/domain/metrics";
 
 type Orm = BunSQLiteDatabase<typeof schema>;
 type Tx = Parameters<Parameters<Orm["transaction"]>[0]>[0];
@@ -124,6 +125,7 @@ export interface Interface {
     readonly salvage: number;
     readonly usefulLifeYears: number;
     readonly purchasedOn: Date;
+    readonly category?: string;
     readonly locationId?: string | null;
   }) => Effect.Effect<RegisteredAsset, NotAllowed | SuspendedUniversity | DuplicateTag | BadMoney | InvalidAsset>;
 
@@ -136,6 +138,7 @@ export interface Interface {
     readonly salvage: number;
     readonly usefulLifeYears: number;
     readonly purchasedOn: Date;
+    readonly category?: string;
     readonly locationId: string | null;
   }) => Effect.Effect<
     AssetSnapshot,
@@ -482,6 +485,7 @@ function registerAsset(
     readonly salvage: number;
     readonly usefulLifeYears: number;
     readonly purchasedOn: Date;
+    readonly category?: string;
     readonly locationId?: string | null;
   },
 ): Outcome<RegisteredAsset, RegisterError> {
@@ -535,6 +539,7 @@ function registerAsset(
           locationId,
           tag,
           title,
+          category: categoryFromInput(input.category ?? ""),
           state: "procured",
           cost: input.cost,
           salvage: input.salvage,
@@ -574,6 +579,7 @@ function updateAsset(
     readonly salvage: number;
     readonly usefulLifeYears: number;
     readonly purchasedOn: Date;
+    readonly category?: string;
     readonly locationId: string | null;
   },
 ): Outcome<AssetSnapshot, UpdateError> {
@@ -632,6 +638,7 @@ function updateAsset(
         .set({
           title,
           tag,
+          category: categoryFromInput(input.category ?? ""),
           locationId: input.locationId,
           cost: input.cost,
           salvage: input.salvage,
@@ -659,6 +666,7 @@ function updateAsset(
         after: {
           title,
           tag,
+          category: categoryFromInput(input.category ?? ""),
           locationId: input.locationId,
           cost: input.cost,
           salvage: input.salvage,

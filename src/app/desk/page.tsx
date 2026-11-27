@@ -1,5 +1,6 @@
 import { labelStaffRole } from "@/domain/staff-invite";
 import { listAssets, listOpenCustody } from "@/lib/asset-store";
+import { loadSchoolMetrics } from "@/lib/metrics-store";
 import { orm } from "@/lib/auth-server";
 import { listFoundReports } from "@/lib/found-store";
 
@@ -33,6 +34,7 @@ export default async function DeskPage() {
     conditionLabel: row.conditionLabel.length === 0 ? "None yet" : row.conditionLabel,
   }));
   const found = listFoundReports(orm, access.organizationId);
+  const metrics = loadSchoolMetrics(orm, access.organizationId, now);
   const loans: readonly DeskLoan[] = listOpenCustody(orm, access.organizationId).map((loan) => ({
     assetId: loan.assetId,
     assetTitle: loan.assetTitle,
@@ -53,6 +55,13 @@ export default async function DeskPage() {
       assets={assets}
       loans={loans}
       found={found}
+      strip={{
+        outNow: metrics.custody.open,
+        dueToday: metrics.custody.dueToday,
+        overdue: metrics.custody.overdue,
+        returnsToday: metrics.custody.returnsToday,
+        foundTags: metrics.found.total,
+      }}
     />
   );
 }

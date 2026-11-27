@@ -25,6 +25,8 @@ export interface ListedAsset {
 
   readonly tag: string;
 
+  readonly category: string;
+
   readonly state: AssetState | null;
 
   readonly stateLabel: string;
@@ -92,6 +94,7 @@ export function listAssets(orm: Orm, universityId: string, now: Date): readonly 
       id: schema.assets.id,
       title: schema.assets.title,
       tag: schema.assets.tag,
+      category: schema.assets.category,
       state: schema.assets.state,
       cost: schema.assets.cost,
       salvage: schema.assets.salvage,
@@ -121,6 +124,7 @@ export function listAssets(orm: Orm, universityId: string, now: Date): readonly 
       id: row.id,
       title: row.title,
       tag: row.tag,
+      category: row.category,
       state,
       stateLabel: state === null ? row.state : labelAssetState(state),
       conditionLabel: condition === null ? "" : labelCondition(condition),

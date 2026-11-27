@@ -72,6 +72,7 @@ export function StaffBoard(props: StaffBoardProps) {
         ariaLabel="Staff desk"
         current="Staff"
         hrefs={{
+          Overview: "/school",
           Staff: "/school/staff",
           Inventory: "/school/inventory",
           Reports: "/school/reports",

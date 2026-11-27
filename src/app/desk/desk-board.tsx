@@ -55,6 +55,14 @@ export interface DeskBoardProps {
   readonly loans: readonly DeskLoan[];
 
   readonly found: readonly FoundReportRow[];
+
+  readonly strip: {
+    readonly outNow: number;
+    readonly dueToday: number;
+    readonly overdue: number;
+    readonly returnsToday: number;
+    readonly foundTags: number;
+  };
 }
 
 export function DeskBoard(props: DeskBoardProps) {
@@ -174,6 +182,31 @@ export function DeskBoard(props: DeskBoardProps) {
             <h1 className="font-display text-[24px] font-semibold text-ink">Desk</h1>
             <p className="text-[12.5px] text-ink3">{props.subtitle}</p>
           </div>
+          <section className="flex h-[52px] w-full items-center gap-0 rounded-[14px] border border-line bg-surface px-4">
+            {[
+              { label: "Out now", value: props.strip.outNow, tone: "accent" as const },
+              { label: "Due today", value: props.strip.dueToday, tone: "accent" as const },
+              { label: "Overdue", value: props.strip.overdue, tone: "red" as const },
+              { label: "Returns today", value: props.strip.returnsToday, tone: "accent" as const },
+              { label: "Found tags", value: props.strip.foundTags, tone: "amber" as const },
+            ].map((item) => (
+              <div key={item.label} className="flex min-w-0 flex-1 items-center gap-2">
+                <span
+                  className={`h-[6px] w-[6px] shrink-0 rounded-full ${
+                    item.tone === "red" ? "bg-red" : item.tone === "amber" ? "bg-amber" : "bg-accent"
+                  }`}
+                />
+                <span className="truncate text-[11px] text-ink2">{item.label}</span>
+                <span
+                  className={`font-mono text-[14px] font-semibold ${
+                    item.tone === "red" ? "text-red" : item.tone === "amber" ? "text-amber" : "text-ink"
+                  }`}
+                >
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </section>
           <section className="flex flex-col gap-3 rounded-[18px] border border-line bg-surface p-[18px] md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="font-display text-[15px] font-semibold text-ink">Day report</h2>

@@ -23,12 +23,13 @@ export function ReportsBoard(props: {
 }) {
   const hrefs: Partial<Record<SchoolNavLabel, string>> = props.canInvite
     ? {
+          Overview: "/school",
           Staff: "/school/staff",
           Inventory: "/school/inventory",
           Reports: "/school/reports",
           "Audit trail": "/school/audit",
         }
-    : { Inventory: "/school/inventory", Reports: "/school/reports" };
+    : { Overview: "/school", Inventory: "/school/inventory", Reports: "/school/reports" };
   return (
     <div className="flex min-h-screen flex-col bg-bg md:flex-row">
       <SchoolRail
