@@ -6,7 +6,7 @@ import { openDatabase } from "@/db/client";
 import { applyMigrations } from "@/db/migrate";
 import * as schema from "@/db/schema";
 import { seed } from "@/db/seed";
-import { loadSchoolMetrics } from "@/lib/metrics-store";
+import { loadBorrowedLoans, loadSchoolMetrics } from "@/lib/metrics-store";
 
 const daystar = "uni_daystar";
 const strathmore = "uni_strathmore";
@@ -238,5 +238,47 @@ describe("school metrics", () => {
     expect(metrics.categories).toEqual([]);
     expect(metrics.locations).toEqual([]);
     expect(metrics.found.total).toBe(0);
+  });
+});
+
+describe("borrowed drill", () => {
+  test("filters a category, an overdue list and a damaged list inside one university", () => {
+    const database = memoryDatabase();
+    addUser(database, "drill", "drill@daystar.ac.ke");
+    addAsset(database, { id: "d1", universityId: daystar, state: "in_custody", category: "Laptop", cost: 1000, purchasedOn: new Date("2025-01-01T00:00:00Z") });
+    addAsset(database, { id: "d2", universityId: daystar, state: "available", category: "Projector", cost: 1000, purchasedOn: new Date("2025-01-01T00:00:00Z") });
+    addAsset(database, { id: "d3", universityId: daystar, state: "available", category: "Calculator", cost: 1000, purchasedOn: new Date("2025-01-01T00:00:00Z") });
+    addAsset(database, { id: "s2", universityId: strathmore, state: "in_custody", category: "Laptop", cost: 1000, purchasedOn: new Date("2025-01-01T00:00:00Z") });
+    const now = new Date("2026-11-27T12:00:00Z");
+    addLoan(database, {
+      id: "b1", universityId: daystar, assetId: "d1", borrowerUserId: "drill",
+      checkedOutAt: new Date("2026-11-20T09:00:00Z"), checkedInAt: null, dueAt: new Date("2026-11-24T09:00:00Z"), conditionOnReturn: null,
+    });
+    addLoan(database, {
+      id: "b2", universityId: daystar, assetId: "d2", borrowerUserId: "drill",
+      checkedOutAt: new Date("2026-11-25T09:00:00Z"), checkedInAt: new Date("2026-11-25T15:00:00Z"), dueAt: null, conditionOnReturn: "damaged",
+    });
+    addLoan(database, {
+      id: "b3", universityId: daystar, assetId: "d3", borrowerUserId: "drill",
+      checkedOutAt: new Date("2026-11-26T09:00:00Z"), checkedInAt: new Date("2026-11-26T10:00:00Z"), dueAt: null, conditionOnReturn: "good",
+    });
+    addLoan(database, {
+      id: "b4", universityId: strathmore, assetId: "s2", borrowerUserId: "drill",
+      checkedOutAt: new Date("2026-11-20T09:00:00Z"), checkedInAt: null, dueAt: new Date("2026-11-24T09:00:00Z"), conditionOnReturn: null,
+    });
+    const orm = ormOf(database);
+    const base = {
+      from: new Date("2026-01-01T00:00:00Z"),
+      to: now,
+      category: null,
+      overdue: false,
+      condition: null,
+      now,
+    } as const;
+
+    expect(loadBorrowedLoans(orm, daystar, { ...base, category: "Laptop" }).map((row) => row.id)).toEqual(["b1"]);
+    expect(loadBorrowedLoans(orm, daystar, { ...base, overdue: true }).map((row) => row.id)).toEqual(["b1"]);
+    expect(loadBorrowedLoans(orm, daystar, { ...base, condition: "damaged" }).map((row) => row.id)).toEqual(["b2"]);
+    expect(loadBorrowedLoans(orm, daystar, base).map((row) => row.id)).toEqual(["b3", "b2", "b1"]);
   });
 });

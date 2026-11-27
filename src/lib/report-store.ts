@@ -66,7 +66,7 @@ const depreciationHeader = ["Asset", "Tag", "Acquired", "Cost", "Salvage", "Life
 
 function periodLine(kind: ReportKind, scope: ReportScope, now: Date): string {
   if (scope === "day") {
-    return `UTC day ${utcDay(now)}. Loans checked out or checked in that day, and loans still open.`;
+    return `UTC day ${utcDay(now)}.`;
   }
   if (scope === "borrower") {
     return "Your own loans.";

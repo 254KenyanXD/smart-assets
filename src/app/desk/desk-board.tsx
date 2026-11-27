@@ -210,9 +210,6 @@ export function DeskBoard(props: DeskBoardProps) {
           <section className="flex flex-col gap-3 rounded-[18px] border border-line bg-surface p-[18px] md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="font-display text-[15px] font-semibold text-ink">Day report</h2>
-              <p className="mt-1 text-[12px] text-ink2">
-                UTC day, including open loans.
-              </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <a

@@ -28,12 +28,17 @@ export function SchoolDashboard(props: {
   const { assets, custody, conditions, categories, locations, finance, found, activity } = props.metrics;
   const peak = Math.max(...activity, 1);
   const periodLoans = categories.reduce((sum, row) => sum + row.loans, 0);
-  const attention: readonly { readonly text: string; readonly tone: "red" | "amber" | "accent" }[] = [
+  const attention: readonly {
+    readonly text: string;
+    readonly tone: "red" | "amber" | "accent";
+    readonly href: string;
+  }[] = [
     ...(custody.overdue > 0
       ? [
           {
             text: `${custody.overdue} ${custody.overdue === 1 ? "loan" : "loans"} past due`,
             tone: "red" as const,
+            href: "/school/borrowed?status=overdue",
           },
         ]
       : []),
@@ -42,11 +47,12 @@ export function SchoolDashboard(props: {
           {
             text: `${conditions.damaged} ${conditions.damaged === 1 ? "return" : "returns"} graded damaged`,
             tone: "amber" as const,
+            href: "/school/borrowed?condition=damaged",
           },
         ]
       : []),
     ...(found.total > 0
-      ? [{ text: `${found.total} found tags unclaimed`, tone: "accent" as const }]
+      ? [{ text: `${found.total} found tags unclaimed`, tone: "accent" as const, href: "/school/found" }]
       : []),
   ];
   return (
@@ -140,8 +146,9 @@ export function SchoolDashboard(props: {
                 <p className="text-[11px] text-ink3">Nothing waiting.</p>
               ) : (
                 attention.slice(0, 3).map((row) => (
-                  <div
+                  <a
                     key={row.text}
+                    href={row.href}
                     className={`flex items-center gap-2 rounded-[10px] px-[10px] py-2 ${
                       row.tone === "red" ? "bg-redbg" : row.tone === "amber" ? "bg-amberbg" : "bg-accsoft"
                     }`}
@@ -158,7 +165,18 @@ export function SchoolDashboard(props: {
                     >
                       {row.text}
                     </span>
-                  </div>
+                    <span className="ml-auto h-3 w-3 opacity-70">
+                      <svg viewBox="0 0 16 16" className="h-3 w-3" aria-hidden="true">
+                        <path
+                          d="M6 3.5 10.5 8 6 12.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </span>
+                  </a>
                 ))
               )}
             </div>
@@ -243,7 +261,7 @@ export function SchoolDashboard(props: {
                 categories.map((row) => (
                   <a
                     key={row.category}
-                    href={`/school/reports?report=demand&category=${encodeURIComponent(row.category)}`}
+                    href={`/school/borrowed?category=${encodeURIComponent(row.category)}`}
                     className="flex items-center gap-[10px] border-b border-line py-[9px] last:border-b-0"
                   >
                     <span className="w-[124px] shrink-0 text-[11px] text-ink2">{row.name}</span>
