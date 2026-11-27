@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AssetState } from "@/domain/asset-state";
 import { displayLocationKind, labelLocationKind, locationKinds } from "@/domain/location";
+import { assetCategories, categoryName } from "@/domain/metrics";
 
 import { createLocation, recordMove, registerAsset, updateAsset } from "./actions";
 
@@ -16,6 +17,8 @@ export interface InventoryRow {
   readonly title: string;
 
   readonly tag: string;
+
+  readonly category: string;
 
   readonly state: AssetState | null;
 
@@ -105,12 +108,13 @@ export function InventoryBoard(props: InventoryBoardProps) {
         hrefs={
           props.canWrite
             ? {
+                Overview: "/school",
                 Staff: "/school/staff",
                 Inventory: "/school/inventory",
                 Reports: "/school/reports",
                 "Audit trail": "/school/audit",
               }
-            : { Inventory: "/school/inventory", Reports: "/school/reports" }
+            : { Overview: "/school", Inventory: "/school/inventory", Reports: "/school/reports" }
         }
       />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -353,6 +357,20 @@ function RegisterForm(props: {
         <Input name="tag" required maxLength={64} autoCapitalize="off" />
       </label>
       <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Category
+        <select
+          name="category"
+          defaultValue="Uncategorised"
+          className="h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
+        >
+          {assetCategories.map((category) => (
+            <option key={category} value={category}>
+              {categoryName(category)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
         Purchase date
         <Input name="purchasedOn" type="date" required />
       </label>
@@ -410,6 +428,20 @@ function EditForm(props: {
       <label className="flex flex-col gap-1 text-[11px] text-ink3">
         Tag
         <Input name="tag" required maxLength={64} autoCapitalize="off" defaultValue={props.row.tag} />
+      </label>
+      <label className="flex flex-col gap-1 text-[11px] text-ink3">
+        Category
+        <select
+          name="category"
+          defaultValue={props.row.category}
+          className="h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
+        >
+          {assetCategories.map((category) => (
+            <option key={category} value={category}>
+              {categoryName(category)}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="flex flex-col gap-1 text-[11px] text-ink3">
         Purchase date

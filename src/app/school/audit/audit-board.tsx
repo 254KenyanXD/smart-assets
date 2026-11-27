@@ -22,6 +22,7 @@ export function AuditBoard(props: {
         ariaLabel="Audit trail"
         current="Audit trail"
         hrefs={{
+          Overview: "/school",
           Staff: "/school/staff",
           Inventory: "/school/inventory",
           Reports: "/school/reports",

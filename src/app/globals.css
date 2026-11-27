@@ -16,6 +16,8 @@
   --sa-on-deep: #f4faf2;
   --sa-amber: #8a5b1c;
   --sa-amberbg: #f7efdd;
+  --sa-sage: #6e9e7a;
+  --sa-sand: #c9a227;
   --sa-red: #9b3b2d;
   --sa-redbg: #f9e9e6;
 }
@@ -36,6 +38,8 @@ html[data-theme="dark"] {
   --sa-on-deep: #f4faf2;
   --sa-amber: #d8b074;
   --sa-amberbg: #33291a;
+  --sa-sage: #7fb08a;
+  --sa-sand: #d8b074;
   --sa-red: #e49a8c;
   --sa-redbg: #38221f;
 }
@@ -56,6 +60,8 @@ html[data-theme="dark"] {
   --color-on-deep: var(--sa-on-deep);
   --color-amber: var(--sa-amber);
   --color-amberbg: var(--sa-amberbg);
+  --color-sage: var(--sa-sage);
+  --color-sand: var(--sa-sand);
   --color-red: var(--sa-red);
   --color-redbg: var(--sa-redbg);
   --font-sans: var(--font-dm), ui-sans-serif, system-ui, sans-serif;

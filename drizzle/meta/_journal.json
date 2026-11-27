@@ -22,6 +22,13 @@
       "when": 1794266515941,
       "tag": "0002_password_resets",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1795779308581,
+      "tag": "0003_asset_category",
+      "breakpoints": true
     }
   ]
 }

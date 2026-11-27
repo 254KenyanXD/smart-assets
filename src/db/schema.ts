@@ -222,6 +222,7 @@ export const assets = sqliteTable(
     locationId: text("location_id").references(() => locations.id, { onDelete: "set null" }),
     tag: text("tag").notNull(),
     title: text("title").notNull(),
+    category: text("category").notNull().default("Uncategorised"),
     state: text("state").notNull(),
     cost: integer("cost").notNull(),
     salvage: integer("salvage").notNull(),

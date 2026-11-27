@@ -65,6 +65,9 @@ export function reportScope(role: ReportRole, kind: ReportKind): ReportScope | n
   if (role === "school_admin" && (kind === "inventory" || kind === "depreciation")) {
     return "university";
   }
+  if (role === "school_admin" && kind === "custody") {
+    return "day";
+  }
   if (role === "attendant" && kind === "custody") {
     return "day";
   }

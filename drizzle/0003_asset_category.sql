@@ -1,0 +1,1 @@
+ALTER TABLE `assets` ADD `category` text DEFAULT 'Uncategorised' NOT NULL;

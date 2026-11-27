@@ -13,6 +13,7 @@ export default async function InventoryPage() {
     id: row.id,
     title: row.title,
     tag: row.tag,
+    category: row.category,
     state: row.state,
     stateLabel: row.stateLabel,
     conditionLabel: row.conditionLabel,
