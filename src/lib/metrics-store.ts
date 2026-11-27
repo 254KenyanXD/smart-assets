@@ -312,3 +312,79 @@ export function loadSchoolMetrics(orm: Orm, universityId: string, now: Date): Sc
     activity,
   };
 }
+
+export interface BorrowedLoan {
+  readonly id: string;
+  readonly assetTitle: string;
+  readonly assetTag: string;
+  readonly category: AssetCategory;
+  readonly borrowerName: string;
+  readonly officialId: string | null;
+  readonly checkedOutAt: Date;
+  readonly dueAt: Date | null;
+  readonly checkedInAt: Date | null;
+  readonly conditionOnReturn: string | null;
+}
+
+export function loadBorrowedLoans(
+  orm: Orm,
+  universityId: string,
+  input: {
+    readonly from: Date;
+    readonly to: Date;
+    readonly category: AssetCategory | null;
+    readonly overdue: boolean;
+    readonly condition: string | null;
+    readonly now: Date;
+  },
+): readonly BorrowedLoan[] {
+  const rows = orm
+    .select({
+      id: schema.custody.id,
+      assetTitle: schema.assets.title,
+      assetTag: schema.assets.tag,
+      category: schema.assets.category,
+      borrowerName: schema.user.name,
+      officialId: schema.studentProfiles.officialId,
+      checkedOutAt: schema.custody.checkedOutAt,
+      dueAt: schema.custody.dueAt,
+      checkedInAt: schema.custody.checkedInAt,
+      conditionOnReturn: schema.custody.conditionOnReturn,
+    })
+    .from(schema.custody)
+    .innerJoin(schema.assets, eq(schema.custody.assetId, schema.assets.id))
+    .innerJoin(schema.user, eq(schema.custody.borrowerUserId, schema.user.id))
+    .leftJoin(schema.studentProfiles, eq(schema.studentProfiles.userId, schema.user.id))
+    .where(eq(schema.custody.universityId, universityId))
+    .all();
+  const visible = rows.filter((row) => {
+    if (input.category !== null && categoryFromInput(row.category) !== input.category) {
+      return false;
+    }
+    if (input.overdue) {
+      return row.checkedInAt === null && row.dueAt !== null && row.dueAt.getTime() < input.now.getTime();
+    }
+    if (input.condition !== null) {
+      return (
+        row.checkedInAt !== null &&
+        row.checkedInAt.getTime() >= input.from.getTime() &&
+        row.conditionOnReturn === input.condition
+      );
+    }
+    return row.checkedOutAt.getTime() >= input.from.getTime() && row.checkedOutAt.getTime() <= input.to.getTime();
+  });
+  return visible
+    .sort((left, right) => right.checkedOutAt.getTime() - left.checkedOutAt.getTime())
+    .map((row) => ({
+      id: row.id,
+      assetTitle: row.assetTitle,
+      assetTag: row.assetTag,
+      category: categoryFromInput(row.category),
+      borrowerName: row.borrowerName,
+      officialId: row.officialId,
+      checkedOutAt: row.checkedOutAt,
+      dueAt: row.dueAt,
+      checkedInAt: row.checkedInAt,
+      conditionOnReturn: row.conditionOnReturn,
+    }));
+}
